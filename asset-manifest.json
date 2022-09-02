@@ -1,0 +1,25 @@
+{
+  "files": {
+    "main.css": "/static/css/main.62311798.css",
+    "main.js": "/static/js/main.09500270.js",
+    "static/js/787.ecc0a127.chunk.js": "/static/js/787.ecc0a127.chunk.js",
+    "static/media/SeleniumLogo.png": "/static/media/SeleniumLogo.8acd00a91ebc15e2633e.png",
+    "static/media/ReactLogo.png": "/static/media/ReactLogo.37940586dd863909ffca.png",
+    "static/media/TailwindLogo.png": "/static/media/TailwindLogo.36b2728bf0d14b7b7576.png",
+    "static/media/PythonLogo.png": "/static/media/PythonLogo.2e65c2b73eddaaf97e06.png",
+    "static/media/DockerLogo.png": "/static/media/DockerLogo.6d1afdb456643d603142.png",
+    "static/media/gmail.ico": "/static/media/gmail.f0044acdc375e26d45ea.ico",
+    "static/media/JavaLogo.png": "/static/media/JavaLogo.c93371c5109cf99dfd8a.png",
+    "static/media/C++.png": "/static/media/C++.f2def405899b7398b7c9.png",
+    "static/media/LinkedinLogo.png": "/static/media/LinkedinLogo.f1d668322dd800064ae5.png",
+    "static/media/JsLogo.png": "/static/media/JsLogo.db393457bf6303d846d6.png",
+    "index.html": "/index.html",
+    "main.62311798.css.map": "/static/css/main.62311798.css.map",
+    "main.09500270.js.map": "/static/js/main.09500270.js.map",
+    "787.ecc0a127.chunk.js.map": "/static/js/787.ecc0a127.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.62311798.css",
+    "static/js/main.09500270.js"
+  ]
+}
