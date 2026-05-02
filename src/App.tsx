@@ -374,7 +374,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen tui-bg text-zinc-100 font-mono text-[14px] selection:bg-claude/30 flex flex-col cursor-default">
+    <div className="min-h-[100dvh] tui-bg text-zinc-100 font-mono text-[14px] selection:bg-claude/30 flex flex-col cursor-default">
 
       {/* Terminal Main Content */}
       <main className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar">
