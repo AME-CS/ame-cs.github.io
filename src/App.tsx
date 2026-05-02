@@ -64,6 +64,15 @@ const FORTUNE_QUOTES = [
   '"In theory, there is no difference between theory and practice. In practice, there is." — Yogi Berra',
   '"The computer was born to solve problems that did not exist before." — Bill Gates',
   '"Debugging is twice as hard as writing the code in the first place." — Brian Kernighan',
+  '"Before software can be reusable it first has to be usable." — Ralph Johnson',
+  '"Optimism is an occupational hazard of programming: feedback is the treatment." — Kent Beck',
+  '"Make it work, make it right, make it fast." — Kent Beck',
+  '"Code is like humor. When you have to explain it, it’s bad." — Cory House',
+  '"Fix the cause, not the symptom." — Steve Maguire',
+  '"A language that doesn\'t affect the way you think about programming is not worth knowing." — Alan Perlis',
+  '"Measuring programming progress by lines of code is like measuring airplane building progress by weight." — Bill Gates',
+  '"Sometimes it pays to stay in bed on Monday, rather than spending the rest of the week debugging Monday\'s code." — Dan Salomon',
+  '"The question of whether machines can think is about as relevant as the question of whether submarines can swim." — Edsger W. Dijkstra'
 ];
 
 const NEOFETCH_LOGO = `
@@ -208,7 +217,7 @@ const MetricsFooter = ({ tokens }: { tokens: number }) => {
   );
 };
 
-const VALID_COMMANDS = ['whoami', 'experience', 'projects', 'skills', 'contact', 'neofetch', 'resume', 'history', 'fortune', 'help', 'clear'];
+const VALID_COMMANDS = ['whoami', 'experience', 'projects', 'skills', 'contact', 'neofetch', 'resume', 'history', 'fortune', 'help', 'clear', 'exit', 'quit'];
 
 const getLevenshteinDistance = (a: string, b: string) => {
   const matrix = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
@@ -861,7 +870,7 @@ export default function App() {
       }
     } else if (e.key === 'Tab') {
       e.preventDefault();
-      const cmds = ['whoami', 'experience', 'projects', 'skills', 'contact', 'neofetch', 'resume', 'history', 'fortune', 'help', 'clear'];
+      const cmds = ['whoami', 'experience', 'projects', 'skills', 'contact', 'neofetch', 'resume', 'history', 'fortune', 'help', 'clear', 'exit', 'quit'];
       const match = cmds.find(c => c.startsWith(input.toLowerCase()));
       if (match) setInput(match);
     }
