@@ -182,33 +182,30 @@ const TypewriterText = ({ text, delay = 15, startDelay = 0 }: { text: string, de
 
   React.useEffect(() => {
     let i = 0;
-    let req: number;
     let timeout: ReturnType<typeof setTimeout>;
+    let isMounted = true;
 
-    const animate = () => {
-      // Add a fixed number of characters per frame based on delay.
-      // This guarantees no massive "catch-ups" if frames are dropped.
-      const charsPerFrame = Math.max(1, Math.round(16 / delay));
-      i += charsPerFrame;
-      if (i > text.length) i = text.length;
-
+    const typeNext = () => {
+      if (!isMounted) return;
+      
+      i += 1;
       setDisplayed(text.substring(0, i));
 
       if (i < text.length) {
-        req = requestAnimationFrame(animate);
+        // Add random jitter for a realistic terminal typing effect
+        const jitter = Math.random() * 10;
+        timeout = setTimeout(typeNext, delay + jitter);
       }
     };
 
     if (startDelay > 0) {
-      timeout = setTimeout(() => {
-        req = requestAnimationFrame(animate);
-      }, startDelay);
+      timeout = setTimeout(typeNext, startDelay);
     } else {
-      req = requestAnimationFrame(animate);
+      timeout = setTimeout(typeNext, delay);
     }
 
     return () => {
-      cancelAnimationFrame(req);
+      isMounted = false;
       clearTimeout(timeout);
     };
   }, [text, delay, startDelay]);
@@ -348,8 +345,8 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
             <div className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-y-2">
             {PORTFOLIO_DATA.whoami.map((item, i) => (
               <React.Fragment key={i}>
-                <span className="text-zinc-500 font-bold self-center text-sm"><TypewriterText text={item.label} startDelay={400 + i * 150} /></span>
-                <span className="text-zinc-200 text-sm"><TypewriterText text={item.value} startDelay={400 + i * 150 + 50} /></span>
+                <span className="text-zinc-500 font-bold self-center text-sm"><TypewriterText text={item.label} startDelay={400 + i * 250} /></span>
+                <span className="text-zinc-200 text-sm"><TypewriterText text={item.value} startDelay={400 + i * 250 + 100} /></span>
               </React.Fragment>
             ))}
           </div>
@@ -368,12 +365,12 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
             {PORTFOLIO_DATA.experience.map((exp, i) => (
               <div key={i} className="flex flex-col">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-zinc-200 font-bold text-sm"><TypewriterText text={exp.company} startDelay={500 + i * 400} /></span>
-                  <span className="text-zinc-500 text-sm"><TypewriterText text={`· ${exp.period}`} startDelay={500 + i * 400 + 100} /></span>
+                  <span className="text-zinc-200 font-bold text-sm"><TypewriterText text={exp.company} startDelay={500 + i * 500} /></span>
+                  <span className="text-zinc-500 text-sm"><TypewriterText text={`· ${exp.period}`} startDelay={500 + i * 500 + 100} /></span>
                 </div>
-                <div className="text-zinc-300 text-sm mb-1"><TypewriterText text={exp.role} startDelay={500 + i * 400 + 200} /></div>
+                <div className="text-zinc-300 text-sm mb-1"><TypewriterText text={exp.role} startDelay={500 + i * 500 + 200} /></div>
                 <div className="text-zinc-400 text-sm leading-relaxed">
-                  <TypewriterText text={exp.desc} startDelay={500 + i * 400 + 300} />
+                  <TypewriterText text={exp.desc} startDelay={500 + i * 500 + 350} />
                 </div>
               </div>
             ))}
@@ -393,10 +390,10 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
             {PORTFOLIO_DATA.projects.map((p, i) => (
               <div key={i} className="flex flex-col">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-zinc-200 font-bold text-sm"><TypewriterText text={p.title} startDelay={500 + i * 300} /></span>
-                  <span className="text-zinc-500 text-xs px-1.5 py-0.5 border border-zinc-700 rounded-md bg-zinc-800/50"><TypewriterText text={p.tech} startDelay={500 + i * 300 + 100} /></span>
+                  <span className="text-zinc-200 font-bold text-sm"><TypewriterText text={p.title} startDelay={500 + i * 400} /></span>
+                  <span className="text-zinc-500 text-xs px-1.5 py-0.5 border border-zinc-700 rounded-md bg-zinc-800/50"><TypewriterText text={p.tech} startDelay={500 + i * 400 + 150} /></span>
                 </div>
-                <p className="text-zinc-400 text-sm leading-relaxed"><TypewriterText text={p.impact} startDelay={500 + i * 300 + 200} /></p>
+                <p className="text-zinc-400 text-sm leading-relaxed"><TypewriterText text={p.impact} startDelay={500 + i * 400 + 300} /></p>
               </div>
             ))}
           </div>
@@ -414,8 +411,8 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
           <div className="my-4 space-y-3 border-l-2 border-zinc-800 pl-4">
             {Object.entries(PORTFOLIO_DATA.skills).map(([cat, skills], i) => (
               <div key={cat} className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-x-2">
-                <div className="text-zinc-500 font-bold text-sm"><TypewriterText text={cat} startDelay={400 + i * 200} /></div>
-                <div className="text-zinc-300 text-sm"><TypewriterText text={skills} startDelay={400 + i * 200 + 100} /></div>
+                <div className="text-zinc-500 font-bold text-sm"><TypewriterText text={cat} startDelay={400 + i * 300} /></div>
+                <div className="text-zinc-300 text-sm"><TypewriterText text={skills} startDelay={400 + i * 300 + 150} /></div>
               </div>
             ))}
           </div>
@@ -433,9 +430,9 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
           <div className="space-y-2 border-l-2 border-zinc-800 pl-4">
             {Object.entries(PORTFOLIO_DATA.contact).map(([platform, link], i) => (
               <div key={platform} className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-x-2">
-                <span className="text-zinc-500 font-bold text-sm"><TypewriterText text={platform} startDelay={400 + i * 200} /></span>
+                <span className="text-zinc-500 font-bold text-sm"><TypewriterText text={platform} startDelay={400 + i * 250} /></span>
                 <a href={platform === 'EMAIL' ? `mailto:${link}` : `https://${link}`} target="_blank" rel="noreferrer" className="text-claude hover:underline text-sm transition-colors">
-                  <TypewriterText text={link} startDelay={400 + i * 200 + 100} />
+                  <TypewriterText text={link} startDelay={400 + i * 250 + 100} />
                 </a>
               </div>
             ))}
@@ -461,8 +458,8 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
               { c: '/help', d: 'Show this help message' }
             ].map((cmd, i) => (
               <div key={cmd.c} className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-x-2 hover:bg-zinc-800/30 px-2 py-1 -mx-2 rounded cursor-pointer transition-colors" onClick={() => onCommandClick(cmd.c)}>
-                <span className="text-claude font-bold text-sm"><TypewriterText text={cmd.c} startDelay={300 + i * 150} /></span>
-                <span className="text-zinc-400 text-sm"><TypewriterText text={cmd.d} startDelay={300 + i * 150 + 75} /></span>
+                <span className="text-claude font-bold text-sm"><TypewriterText text={cmd.c} startDelay={300 + i * 200} /></span>
+                <span className="text-zinc-400 text-sm"><TypewriterText text={cmd.d} startDelay={300 + i * 200 + 100} /></span>
               </div>
             ))}
           </div>
