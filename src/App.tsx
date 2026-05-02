@@ -177,40 +177,73 @@ const getDidYouMean = (cmd: string) => {
 };
 
 
-const TypewriterText = ({ text, delay = 15, startDelay = 0 }: { text: string, delay?: number, startDelay?: number }) => {
+const ScrollContext = React.createContext<(() => void) | null>(null);
+
+const TypewriterText = ({ text, delay = 18, onComplete }: { text: string, delay?: number, onComplete?: () => void }) => {
   const [displayed, setDisplayed] = React.useState('');
+  const scrollTo = React.useContext(ScrollContext);
+  const completedRef = React.useRef(false);
 
   React.useEffect(() => {
-    let i = 0;
-    let timeout: ReturnType<typeof setTimeout>;
-    let isMounted = true;
+    let charIndex = 0;
+    let rafId: number;
+    let startTime: number | null = null;
+    completedRef.current = false;
 
-    const typeNext = () => {
-      if (!isMounted) return;
-      
-      i += 1;
-      setDisplayed(text.substring(0, i));
+    const animate = (timestamp: number) => {
+      if (startTime === null) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const targetChars = Math.min(Math.floor(elapsed / delay) + 1, text.length);
 
-      if (i < text.length) {
-        // Add random jitter for a realistic terminal typing effect
-        const jitter = Math.random() * 10;
-        timeout = setTimeout(typeNext, delay + jitter);
+      if (targetChars > charIndex) {
+        charIndex = targetChars;
+        setDisplayed(text.substring(0, charIndex));
+        scrollTo?.();
+      }
+
+      if (charIndex < text.length) {
+        rafId = requestAnimationFrame(animate);
+      } else if (!completedRef.current) {
+        completedRef.current = true;
+        onComplete?.();
       }
     };
 
-    if (startDelay > 0) {
-      timeout = setTimeout(typeNext, startDelay);
-    } else {
-      timeout = setTimeout(typeNext, delay);
-    }
-
-    return () => {
-      isMounted = false;
-      clearTimeout(timeout);
-    };
-  }, [text, delay, startDelay]);
+    rafId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafId);
+  }, [text, delay, onComplete, scrollTo]);
 
   return <span>{displayed}</span>;
+};
+
+// Renders items one at a time. Each item streams fully before the next appears.
+type StreamItem = {
+  render: (streaming: boolean, onDone: () => void) => React.ReactNode;
+};
+
+// Hook to create shared step state for coordinating multiple StreamSequence instances
+const useStreamStep = () => {
+  const [step, setStep] = React.useState(0);
+  return React.useMemo(() => ({ step, setStep }), [step]);
+};
+
+type StepState = { step: number; setStep: React.Dispatch<React.SetStateAction<number>> };
+
+const StreamSequence = ({ items, stepState, offset = 0 }: { items: StreamItem[], stepState?: StepState, offset?: number }) => {
+  const [localStep, setLocalStep] = React.useState(0);
+  const step = stepState ? stepState.step : localStep;
+  const setStep = stepState ? stepState.setStep : setLocalStep;
+  const advance = React.useCallback(() => setStep(s => s + 1), [setStep]);
+
+  return (
+    <>
+      {items.map((item, i) => {
+        const globalIdx = offset + i;
+        if (step < globalIdx) return null;
+        return <React.Fragment key={i}>{item.render(step === globalIdx, advance)}</React.Fragment>;
+      })}
+    </>
+  );
 };
 
 const TaskRunner = ({ tools, children }: { tools: string[], children: React.ReactNode }) => {
@@ -250,6 +283,7 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
   const args = normalizedCmd.split(' ').filter(Boolean);
   const baseCmd = args[0] || '';
   const isVerbose = args.includes('--verbose') || args.includes('--thought');
+  const sharedStep = useStreamStep();
 
   const VerboseLogs = () => (
     <div className="text-xs text-zinc-500 font-mono mb-4 space-y-1 opacity-70">
@@ -336,136 +370,149 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
   }
 
   switch (baseCmd) {
-    case 'whoami':
+    case 'whoami': {
+      const items: StreamItem[] = [
+        { render: (s, d) => <div className="mt-3 text-zinc-300 mb-2">{s ? <TypewriterText text="Here is your profile data:" onComplete={d} /> : "Here is your profile data:"}</div> },
+        ...PORTFOLIO_DATA.whoami.flatMap((item) => [
+          { render: (s: boolean, d: () => void) => <span className="text-zinc-500 font-bold self-center text-sm">{s ? <TypewriterText text={item.label} onComplete={d} /> : item.label}</span> },
+          { render: (s: boolean, d: () => void) => <span className="text-zinc-200 text-sm">{s ? <TypewriterText text={item.value} onComplete={d} /> : item.value}</span> },
+        ])
+      ];
       return (
         <div className="my-2 break-words">
           <TaskRunner tools={["List directory ./", "Read file whoami.json"]}>
             {isVerbose && <VerboseLogs />}
-            <div className="mt-3 text-zinc-300 mb-2"><TypewriterText text="Here is your profile data:" /></div>
+            <StreamSequence items={[items[0]]} stepState={sharedStep} offset={0} />
             <div className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-y-2">
-            {PORTFOLIO_DATA.whoami.map((item, i) => (
-              <React.Fragment key={i}>
-                <span className="text-zinc-500 font-bold self-center text-sm"><TypewriterText text={item.label} startDelay={400 + i * 250} /></span>
-                <span className="text-zinc-200 text-sm"><TypewriterText text={item.value} startDelay={400 + i * 250 + 100} /></span>
-              </React.Fragment>
-            ))}
-          </div>
-          <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.whoami).length / 4) + 25} />
+              <StreamSequence items={items.slice(1)} stepState={sharedStep} offset={1} />
+            </div>
+            <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.whoami).length / 4) + 25} />
           </TaskRunner>
         </div>
       );
+    }
     
-    case 'experience':
+    case 'experience': {
+      const items: StreamItem[] = [
+        { render: (s, d) => <div className="mt-3 text-zinc-300 mb-4">{s ? <TypewriterText text="I found the following professional timeline:" onComplete={d} /> : "I found the following professional timeline:"}</div> },
+        ...PORTFOLIO_DATA.experience.flatMap((exp) => [
+          { render: (s: boolean, d: () => void) => <div className="flex items-center gap-2 mb-1"><span className="text-zinc-200 font-bold text-sm">{s ? <TypewriterText text={exp.company} onComplete={d} /> : exp.company}</span></div> },
+          { render: (s: boolean, d: () => void) => <div className="text-zinc-500 text-sm mb-1">{s ? <TypewriterText text={`· ${exp.period}`} onComplete={d} /> : `· ${exp.period}`}</div> },
+          { render: (s: boolean, d: () => void) => <div className="text-zinc-300 text-sm mb-1">{s ? <TypewriterText text={exp.role} onComplete={d} /> : exp.role}</div> },
+          { render: (s: boolean, d: () => void) => <div className="text-zinc-400 text-sm leading-relaxed mb-4">{s ? <TypewriterText text={exp.desc} onComplete={d} /> : exp.desc}</div> },
+        ])
+      ];
       return (
         <div className="my-2 break-words">
           <TaskRunner tools={["Read file experience.md", "Grep search 'timeline'", "Formatting timeline markdown..."]}>
-          {isVerbose && <VerboseLogs />}
-          <div className="mt-3 text-zinc-300 mb-4"><TypewriterText text="I found the following professional timeline:" /></div>
-          <div className="space-y-5 border-l-2 border-zinc-800 pl-4">
-            {PORTFOLIO_DATA.experience.map((exp, i) => (
-              <div key={i} className="flex flex-col">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-zinc-200 font-bold text-sm"><TypewriterText text={exp.company} startDelay={500 + i * 500} /></span>
-                  <span className="text-zinc-500 text-sm"><TypewriterText text={`· ${exp.period}`} startDelay={500 + i * 500 + 100} /></span>
-                </div>
-                <div className="text-zinc-300 text-sm mb-1"><TypewriterText text={exp.role} startDelay={500 + i * 500 + 200} /></div>
-                <div className="text-zinc-400 text-sm leading-relaxed">
-                  <TypewriterText text={exp.desc} startDelay={500 + i * 500 + 350} />
-                </div>
-              </div>
-            ))}
-          </div>
-          <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.experience).length / 4) + 40} />
+            {isVerbose && <VerboseLogs />}
+            <StreamSequence items={[items[0]]} stepState={sharedStep} offset={0} />
+            <div className="border-l-2 border-zinc-800 pl-4">
+              <StreamSequence items={items.slice(1)} stepState={sharedStep} offset={1} />
+            </div>
+            <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.experience).length / 4) + 40} />
           </TaskRunner>
         </div>
       );
+    }
       
-    case 'projects':
+    case 'projects': {
+      const items: StreamItem[] = [
+        { render: (s, d) => <div className="mt-3 text-zinc-300 mb-4">{s ? <TypewriterText text="Here are the featured builds in your portfolio:" onComplete={d} /> : "Here are the featured builds in your portfolio:"}</div> },
+        ...PORTFOLIO_DATA.projects.flatMap((p) => [
+          { render: (s: boolean, d: () => void) => <div className="flex items-center gap-2 mb-1"><span className="text-zinc-200 font-bold text-sm">{s ? <TypewriterText text={p.title} onComplete={d} /> : p.title}</span></div> },
+          { render: (s: boolean, d: () => void) => <div className="text-zinc-500 text-xs mb-1">{s ? <TypewriterText text={p.tech} onComplete={d} /> : <span className="px-1.5 py-0.5 border border-zinc-700 rounded-md bg-zinc-800/50">{p.tech}</span>}</div> },
+          { render: (s: boolean, d: () => void) => <p className="text-zinc-400 text-sm leading-relaxed mb-4">{s ? <TypewriterText text={p.impact} onComplete={d} /> : p.impact}</p> },
+        ])
+      ];
       return (
         <div className="my-2 break-words">
           <TaskRunner tools={["List directory ./projects", "Read file projects/metadata.json", "Search github repositories...", "Formatting output..."]}>
-          {isVerbose && <VerboseLogs />}
-          <div className="mt-3 text-zinc-300 mb-4"><TypewriterText text="Here are the featured builds in your portfolio:" /></div>
-          <div className="space-y-4">
-            {PORTFOLIO_DATA.projects.map((p, i) => (
-              <div key={i} className="flex flex-col">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-zinc-200 font-bold text-sm"><TypewriterText text={p.title} startDelay={500 + i * 400} /></span>
-                  <span className="text-zinc-500 text-xs px-1.5 py-0.5 border border-zinc-700 rounded-md bg-zinc-800/50"><TypewriterText text={p.tech} startDelay={500 + i * 400 + 150} /></span>
-                </div>
-                <p className="text-zinc-400 text-sm leading-relaxed"><TypewriterText text={p.impact} startDelay={500 + i * 400 + 300} /></p>
-              </div>
-            ))}
-          </div>
-          <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.projects).length / 4) + 30} />
+            {isVerbose && <VerboseLogs />}
+            <StreamSequence items={items} stepState={sharedStep} offset={0} />
+            <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.projects).length / 4) + 30} />
           </TaskRunner>
         </div>
       );
+    }
 
-    case 'skills':
+    case 'skills': {
+      const skillEntries = Object.entries(PORTFOLIO_DATA.skills);
+      const items: StreamItem[] = [
+        { render: (s, d) => <div className="mt-3 text-zinc-300 mb-2">{s ? <TypewriterText text="Technical capabilities:" onComplete={d} /> : "Technical capabilities:"}</div> },
+        ...skillEntries.flatMap(([cat, skills]) => [
+          { render: (s: boolean, d: () => void) => <span className="text-zinc-500 font-bold text-sm">{s ? <TypewriterText text={cat} onComplete={d} /> : cat}</span> },
+          { render: (s: boolean, d: () => void) => <span className="text-zinc-300 text-sm">{s ? <TypewriterText text={skills} onComplete={d} /> : skills}</span> },
+        ])
+      ];
       return (
         <div className="my-2 break-words">
           <TaskRunner tools={["Read file skills.yml"]}>
-          {isVerbose && <VerboseLogs />}
-          <div className="mt-3 text-zinc-300 mb-2"><TypewriterText text="Technical capabilities:" /></div>
-          <div className="my-4 space-y-3 border-l-2 border-zinc-800 pl-4">
-            {Object.entries(PORTFOLIO_DATA.skills).map(([cat, skills], i) => (
-              <div key={cat} className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-x-2">
-                <div className="text-zinc-500 font-bold text-sm"><TypewriterText text={cat} startDelay={400 + i * 300} /></div>
-                <div className="text-zinc-300 text-sm"><TypewriterText text={skills} startDelay={400 + i * 300 + 150} /></div>
+            {isVerbose && <VerboseLogs />}
+            <StreamSequence items={[items[0]]} stepState={sharedStep} offset={0} />
+            <div className="my-4 space-y-3 border-l-2 border-zinc-800 pl-4">
+              <div className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-x-2 gap-y-3">
+                <StreamSequence items={items.slice(1)} stepState={sharedStep} offset={1} />
               </div>
-            ))}
-          </div>
-          <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.skills).length / 4) + 20} />
+            </div>
+            <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.skills).length / 4) + 20} />
           </TaskRunner>
         </div>
       );
+    }
 
-    case 'contact':
+    case 'contact': {
+      const items: StreamItem[] = [
+        { render: (s, d) => <div className="mt-3 text-zinc-300 mb-2">{s ? <TypewriterText text="Secure communication uplinks:" onComplete={d} /> : "Secure communication uplinks:"}</div> },
+        ...Object.entries(PORTFOLIO_DATA.contact).flatMap(([platform, link]) => [
+          { render: (s: boolean, d: () => void) => <span className="text-zinc-500 font-bold text-sm">{s ? <TypewriterText text={platform} onComplete={d} /> : platform}</span> },
+          { render: (s: boolean, d: () => void) => <a href={platform === 'EMAIL' ? `mailto:${link}` : `https://${link}`} target="_blank" rel="noreferrer" className="text-claude hover:underline text-sm transition-colors">{s ? <TypewriterText text={link} onComplete={d} /> : link}</a> },
+        ])
+      ];
       return (
         <div className="my-2 break-words">
           <TaskRunner tools={["Read file contact.json", "Verify external uplinks..."]}>
-          {isVerbose && <VerboseLogs />}
-          <div className="mt-3 text-zinc-300 mb-2"><TypewriterText text="Secure communication uplinks:" /></div>
-          <div className="space-y-2 border-l-2 border-zinc-800 pl-4">
-            {Object.entries(PORTFOLIO_DATA.contact).map(([platform, link], i) => (
-              <div key={platform} className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-x-2">
-                <span className="text-zinc-500 font-bold text-sm"><TypewriterText text={platform} startDelay={400 + i * 250} /></span>
-                <a href={platform === 'EMAIL' ? `mailto:${link}` : `https://${link}`} target="_blank" rel="noreferrer" className="text-claude hover:underline text-sm transition-colors">
-                  <TypewriterText text={link} startDelay={400 + i * 250 + 100} />
-                </a>
+            {isVerbose && <VerboseLogs />}
+            <StreamSequence items={[items[0]]} stepState={sharedStep} offset={0} />
+            <div className="space-y-2 border-l-2 border-zinc-800 pl-4">
+              <div className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-x-2 gap-y-2">
+                <StreamSequence items={items.slice(1)} stepState={sharedStep} offset={1} />
               </div>
-            ))}
-          </div>
-          <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.contact).length / 4) + 20} />
+            </div>
+            <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.contact).length / 4) + 20} />
           </TaskRunner>
         </div>
       );
+    }
 
     case '/help':
-    case 'help':
+    case 'help': {
+      const helpCmds = [
+        { c: 'whoami', d: 'View profile information' },
+        { c: 'experience', d: 'View work history' },
+        { c: 'projects', d: 'View featured projects' },
+        { c: 'skills', d: 'View technical skills' },
+        { c: 'contact', d: 'View contact links' },
+        { c: '/clear', d: 'Clear the terminal output' },
+        { c: '/help', d: 'Show this help message' }
+      ];
+      const items: StreamItem[] = [
+        { render: (s, d) => <div className="text-zinc-300 mb-2 text-sm font-semibold">{s ? <TypewriterText text="Available commands:" onComplete={d} /> : "Available commands:"}</div> },
+        ...helpCmds.flatMap((cmd) => [
+          { render: (s: boolean, d: () => void) => <span className="text-claude font-bold text-sm">{s ? <TypewriterText text={cmd.c} onComplete={d} /> : cmd.c}</span> },
+          { render: (s: boolean, d: () => void) => <span className="text-zinc-400 text-sm">{s ? <TypewriterText text={cmd.d} onComplete={d} /> : cmd.d}</span> },
+        ])
+      ];
       return (
         <div className="my-4">
-          <div className="text-zinc-300 mb-2 text-sm font-semibold"><TypewriterText text="Available commands:" /></div>
-          <div className="space-y-1">
-            {[
-              { c: 'whoami', d: 'View profile information' },
-              { c: 'experience', d: 'View work history' },
-              { c: 'projects', d: 'View featured projects' },
-              { c: 'skills', d: 'View technical skills' },
-              { c: 'contact', d: 'View contact links' },
-              { c: '/clear', d: 'Clear the terminal output' },
-              { c: '/help', d: 'Show this help message' }
-            ].map((cmd, i) => (
-              <div key={cmd.c} className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-x-2 hover:bg-zinc-800/30 px-2 py-1 -mx-2 rounded cursor-pointer transition-colors" onClick={() => onCommandClick(cmd.c)}>
-                <span className="text-claude font-bold text-sm"><TypewriterText text={cmd.c} startDelay={300 + i * 200} /></span>
-                <span className="text-zinc-400 text-sm"><TypewriterText text={cmd.d} startDelay={300 + i * 200 + 100} /></span>
-              </div>
-            ))}
+          <StreamSequence items={[items[0]]} stepState={sharedStep} offset={0} />
+          <div className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-x-2 gap-y-1 px-2 -mx-2">
+            <StreamSequence items={items.slice(1)} stepState={sharedStep} offset={1} />
           </div>
           <MetricsFooter tokens={145} />
         </div>
       );
+    }
 
     default:
       const suggestion = getDidYouMean(baseCmd);
@@ -512,6 +559,11 @@ export default function App() {
   
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+
+  const scrollToBottom = React.useCallback(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, []);
 
   useEffect(() => {
     const bootSequence = async () => {
@@ -538,11 +590,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    scrollToBottom();
     if (!isProcessing && !isBooting) {
       inputRef.current?.focus();
     }
-  }, [history, isProcessing, isBooting]);
+  }, [history, isProcessing, isBooting, scrollToBottom]);
 
   const executeCommand = async (cmd: string) => {
     if (isProcessing || isBooting || isTerminated) return;
@@ -615,10 +667,11 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-[100dvh] tui-bg text-zinc-100 font-mono text-[14px] selection:bg-claude/30 flex flex-col cursor-default">
+    <ScrollContext.Provider value={scrollToBottom}>
+    <div className="h-[100dvh] tui-bg text-zinc-100 font-mono text-[14px] selection:bg-claude/30 flex flex-col cursor-default">
 
       {/* Terminal Main Content */}
-      <main className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar">
+      <main ref={mainRef} className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar">
         <div className="w-full pb-40">
           {history.map((item) => (
             <div key={item.id} className="tui-fade-in">
@@ -692,5 +745,6 @@ export default function App() {
         </div>
       </div>
     </div>
+    </ScrollContext.Provider>
   );
 }
