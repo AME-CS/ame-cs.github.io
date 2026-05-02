@@ -71,14 +71,20 @@ const BrailleSpinner = () => {
 
 const ThinkingBlock = () => {
   const verbs = [
+    'Clauding...',
+    'Boondoggling...',
+    'Flibbertigibbeting...',
+    'Hullaballooing...',
+    'Dilly-dallying...',
+    'Discombobulating...',
+    'Fiddle-faddling...',
+    'Gitifying...',
+    'Honking...',
+    'Hyperspacing...',
     'Combobulating...',
-    'Photosynthesizing...',
-    'Pondering...',
-    'Moonwalking...',
-    'Blaming DNS...',
-    'Yak-shaving...',
-    'Sacrificing a semicolon...',
-    'Reticulating splines...'
+    'Cogitating...',
+    'Booping...',
+    'Bloviating...'
   ];
   const [verbIdx, setVerbIdx] = useState(0);
 
