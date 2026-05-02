@@ -103,22 +103,35 @@ const ThinkingBlock = () => {
   );
 };
 
-const TUIBox = ({ children, title }: { children: React.ReactNode; title?: string }) => (
-  <div className="my-2">
-    {title && (
-      <div className="text-claude font-bold text-sm mb-2 opacity-90">
-        # {title}
-      </div>
-    )}
-    <div className="">{children}</div>
+
+
+const ToolUse = ({ action }: { action: string }) => (
+  <div className="flex items-center gap-2 text-zinc-500 text-[13px] my-1.5 font-medium">
+    <span className="text-green-500/80">✓</span>
+    <span>{action}</span>
   </div>
 );
+
+const MetricsFooter = () => {
+  const tokens = (Math.random() * 2 + 1).toFixed(1);
+  const cost = (Math.random() * 0.005 + 0.001).toFixed(4);
+  const duration = (Math.random() * 3 + 1).toFixed(1);
+  return (
+    <div className="text-[11px] text-zinc-600 mt-4 flex gap-3 pt-2">
+      <span>Tokens: {tokens}k</span>
+      <span>Cost: ${cost}</span>
+      <span>Duration: {duration}s</span>
+    </div>
+  );
+};
 
 const CommandOutput = ({ command, onCommandClick }: { command: string, onCommandClick: (cmd: string) => void }) => {
   switch (command.toLowerCase().trim()) {
     case 'whoami':
       return (
-        <TUIBox title="PROFILE DATA">
+        <div className="my-2">
+          <ToolUse action="Read file whoami.json" />
+          <div className="mt-3 text-zinc-300 mb-2">Here is your profile data:</div>
           <div className="grid grid-cols-[120px_1fr] gap-y-2">
             {PORTFOLIO_DATA.whoami.map((item, i) => (
               <React.Fragment key={i}>
@@ -127,13 +140,17 @@ const CommandOutput = ({ command, onCommandClick }: { command: string, onCommand
               </React.Fragment>
             ))}
           </div>
-        </TUIBox>
+          <MetricsFooter />
+        </div>
       );
     
     case 'experience':
       return (
-        <TUIBox title="PROFESSIONAL TIMELINE">
-          <div className="space-y-5">
+        <div className="my-2">
+          <ToolUse action="Read file experience.md" />
+          <ToolUse action="Grep search 'timeline'" />
+          <div className="mt-3 text-zinc-300 mb-4">I found the following professional timeline:</div>
+          <div className="space-y-5 border-l-2 border-zinc-800 pl-4">
             {PORTFOLIO_DATA.experience.map((exp, i) => (
               <div key={i} className="flex flex-col">
                 <div className="flex items-center gap-2 mb-1">
@@ -147,12 +164,15 @@ const CommandOutput = ({ command, onCommandClick }: { command: string, onCommand
               </div>
             ))}
           </div>
-        </TUIBox>
+          <MetricsFooter />
+        </div>
       );
       
     case 'projects':
       return (
-        <TUIBox title="FEATURED BUILDS">
+        <div className="my-2">
+          <ToolUse action="List directory ./projects" />
+          <div className="mt-3 text-zinc-300 mb-4">Here are the featured builds in your portfolio:</div>
           <div className="space-y-4">
             {PORTFOLIO_DATA.projects.map((p, i) => (
               <div key={i} className="flex flex-col">
@@ -164,25 +184,33 @@ const CommandOutput = ({ command, onCommandClick }: { command: string, onCommand
               </div>
             ))}
           </div>
-        </TUIBox>
+          <MetricsFooter />
+        </div>
       );
 
     case 'skills':
       return (
-        <div className="my-4 space-y-3">
-          {Object.entries(PORTFOLIO_DATA.skills).map(([cat, skills]) => (
-            <div key={cat} className="grid grid-cols-[120px_1fr]">
-              <div className="text-zinc-500 font-bold text-sm">{cat}</div>
-              <div className="text-zinc-300 text-sm">{skills}</div>
-            </div>
-          ))}
+        <div className="my-2">
+          <ToolUse action="Read file skills.yml" />
+          <div className="mt-3 text-zinc-300 mb-2">Technical capabilities:</div>
+          <div className="my-4 space-y-3 border-l-2 border-zinc-800 pl-4">
+            {Object.entries(PORTFOLIO_DATA.skills).map(([cat, skills]) => (
+              <div key={cat} className="grid grid-cols-[120px_1fr]">
+                <div className="text-zinc-500 font-bold text-sm">{cat}</div>
+                <div className="text-zinc-300 text-sm">{skills}</div>
+              </div>
+            ))}
+          </div>
+          <MetricsFooter />
         </div>
       );
 
     case 'contact':
       return (
-        <TUIBox title="CONTACT">
-          <div className="space-y-2">
+        <div className="my-2">
+          <ToolUse action="Read file contact.json" />
+          <div className="mt-3 text-zinc-300 mb-2">Secure communication uplinks:</div>
+          <div className="space-y-2 border-l-2 border-zinc-800 pl-4">
             {Object.entries(PORTFOLIO_DATA.contact).map(([platform, link]) => (
               <div key={platform} className="grid grid-cols-[120px_1fr]">
                 <span className="text-zinc-500 font-bold text-sm">{platform}</span>
@@ -192,14 +220,15 @@ const CommandOutput = ({ command, onCommandClick }: { command: string, onCommand
               </div>
             ))}
           </div>
-        </TUIBox>
+          <MetricsFooter />
+        </div>
       );
 
     case '/help':
     case 'help':
       return (
         <div className="my-4">
-          <div className="text-zinc-400 mb-2 text-sm">Available commands:</div>
+          <div className="text-zinc-300 mb-2 text-sm font-semibold">Available commands:</div>
           <div className="space-y-1">
             {[
               { c: 'whoami', d: 'View profile information' },
@@ -216,13 +245,21 @@ const CommandOutput = ({ command, onCommandClick }: { command: string, onCommand
               </div>
             ))}
           </div>
+          <MetricsFooter />
         </div>
       );
 
     default:
       return (
-        <div className="my-2 text-zinc-400 text-sm">
-          Command not found: {command}. Type <span className="text-claude cursor-pointer hover:underline" onClick={() => onCommandClick('/help')}>/help</span> to see available commands.
+        <div className="my-2">
+          <ToolUse action={`Execute command '${command}'`} />
+          <div className="text-red-400 text-sm mt-3 font-semibold">
+            Error: Command not found
+          </div>
+          <div className="text-zinc-400 text-sm mt-1">
+            I don't recognize the command '{command}'. Type <span className="text-claude cursor-pointer hover:underline" onClick={() => onCommandClick('/help')}>/help</span> to see available commands.
+          </div>
+          <MetricsFooter />
         </div>
       );
   }
