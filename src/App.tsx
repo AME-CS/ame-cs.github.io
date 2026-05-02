@@ -1,16 +1,12 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Mail, 
-  ExternalLink, 
-  ChevronRight, 
-  Cpu, 
-  Code2, 
-  Database, 
-  Globe, 
-  Terminal,
+  Command, 
+  Zap, 
   Layers,
-  Zap
+  ExternalLink,
+  Loader2,
+  Sparkles
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -19,306 +15,411 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-const GithubIcon = ({ size = 20 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A3.37 3.37 0 0 0 20.47 4.5a3.37 3.37 0 0 0-.08-2.31s-.78-.25-2.54 1a11.57 11.57 0 0 0-6 0c-1.76-1.25-2.54-1-2.54-1a3.37 3.37 0 0 0-.08 2.31A3.37 3.37 0 0 0 5.4 7c0 5.46 3.3 6.65 6.44 7a3.37 3.37 0 0 0-.94 2.58V22"></path>
-  </svg>
-);
+// ----------------------------------------------------------------------
+// DATA
+// ----------------------------------------------------------------------
+const PORTFOLIO_DATA = {
+  whoami: `Hi, I'm Ahmed Eid. 
+I'm an AI Architect and Software Engineer specializing in autonomous agent orchestration, adversarial ML, and high-scale distributed systems. Currently building at Visa.`,
+  
+  experience: [
+    {
+      role: "Software Engineer — AI Platform & Payments",
+      company: "Visa Inc.",
+      period: "Jan 2024 — Present",
+      bullets: [
+        "Architected AI-powered release automation platform using LangGraph multi-agent orchestration and MCP protocol.",
+        "Built real-time transaction monitoring dashboard in React 18 & TypeScript.",
+        "Engineered Tier-0 B2B payment APIs using Java 17 and Spring Boot 3.4 processing $500M+ annually."
+      ]
+    },
+    {
+      role: "Software Engineering Intern",
+      company: "Visa Inc.",
+      period: "May 2023 — Aug 2023",
+      bullets: [
+        "Developed LSTM neural network using TensorFlow/Keras for API anomaly detection (95% accuracy).",
+        "Built model-evaluation UI in React with D3.js."
+      ]
+    },
+    {
+      role: "Software Engineering Intern — Embedded Systems",
+      company: "VIZIO Inc.",
+      period: "Jun 2022 — Aug 2022",
+      bullets: [
+        "Engineered OTA firmware update system in C/C++ with delta patching.",
+        "Developed HAL interfaces for ARM Cortex-M microcontrollers."
+      ]
+    }
+  ],
 
-const LinkedinIcon = ({ size = 20 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-    <rect x="2" y="9" width="4" height="12"></rect>
-    <circle cx="4" cy="4" r="2"></circle>
-  </svg>
-);
+  projects: [
+    {
+      title: "Agent-Redteam",
+      desc: "Autonomous adversarial AI tester built in Rust. Features a neuroevolution engine using genetic algorithms and RL to evolve attack patterns against AI coding agents.",
+      tech: "Rust, RL, WebSockets",
+      icon: Zap
+    },
+    {
+      title: "CubeVision",
+      desc: "Real-time Rubik's Cube solver using computer vision. Achieved 98% color detection accuracy and implemented Korf's IDA* algorithm.",
+      tech: "Python, OpenCV, C++",
+      icon: Layers
+    }
+  ],
 
-const Navbar = () => (
-  <nav className="fixed top-0 w-full z-50 glass-card border-x-0 border-t-0 py-4 px-6 md:px-12 flex justify-between items-center">
-    <div className="flex items-center gap-2">
-      <div className="w-8 h-8 rounded-lg brand-gradient flex items-center justify-center text-white font-bold">A</div>
-      <span className="text-text-primary font-medium tracking-tight">Ahmed Eid</span>
-    </div>
-    <div className="hidden md:flex gap-8 text-sm font-medium text-text-secondary">
-      <a href="#about" className="hover:text-text-primary transition-colors">About</a>
-      <a href="#experience" className="hover:text-text-primary transition-colors">Experience</a>
-      <a href="#projects" className="hover:text-text-primary transition-colors">Projects</a>
-      <a href="#skills" className="hover:text-text-primary transition-colors">Skills</a>
-    </div>
-    <div className="flex items-center gap-4">
-      <a href="https://github.com/AME-CS" target="_blank" rel="noopener noreferrer" className="text-text-secondary hover:text-text-primary transition-colors">
-        <GithubIcon size={20} />
-      </a>
-      <a href="https://linkedin.com/in/ahmed-maaz-eid" target="_blank" rel="noopener noreferrer" className="text-text-secondary hover:text-text-primary transition-colors">
-        <LinkedinIcon size={20} />
-      </a>
-    </div>
-  </nav>
-);
+  skills: {
+    "AI & ML": "Agentic Workflows (LangGraph), MCP Protocol, RL, LLM Security, TensorFlow",
+    "Core": "Rust, Python, Java, TypeScript, Go, C/C++",
+    "Systems": "Kubernetes, Docker, AWS, Kafka, PostgreSQL",
+    "Web": "React, Next.js, Spring Boot, FastAPI"
+  },
 
-const Hero = () => (
-  <section id="about" className="pt-32 pb-20 px-6 md:px-12 max-w-7xl mx-auto flex flex-col items-center text-center">
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-    >
-      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-card text-xs font-medium text-brand-violet mb-6">
-        <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-violet opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-violet"></span>
-        </span>
-        Available for AI & Software Engineering roles
-      </div>
-      <h1 className="text-5xl md:text-7xl font-semibold text-text-primary mb-6 tracking-tight leading-tight">
-        Architecting the future of <br />
-        <span className="text-transparent bg-clip-text brand-gradient">AI-Powered Systems.</span>
-      </h1>
-      <p className="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto mb-10 leading-relaxed">
-        AI Architect and Software Engineer specializing in autonomous agent orchestration, adversarial ML, and high-scale distributed systems at Visa.
-      </p>
-      <div className="flex gap-4 justify-center">
-        <a href="#projects" className="px-6 py-3 rounded-lg brand-gradient text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-2">
-          View Projects <ChevronRight size={18} />
-        </a>
-        <a href="mailto:ahmed.maaz.eid@gmail.com" className="px-6 py-3 rounded-lg glass-card text-text-primary font-medium hover:bg-white/5 transition-colors">
-          Contact Me
-        </a>
-      </div>
-    </motion.div>
+  contact: {
+    Email: "ahmed.maaz.eid@gmail.com",
+    GitHub: "github.com/AME-CS",
+    LinkedIn: "linkedin.com/in/ahmed-maaz-eid"
+  }
+};
+
+// ----------------------------------------------------------------------
+// COMPONENTS
+// ----------------------------------------------------------------------
+
+const Typewriter = ({ text, delay = 15, onComplete }: { text: string, delay?: number, onComplete?: () => void }) => {
+  const [displayedText, setDisplayedText] = useState('');
+  
+  useEffect(() => {
+    let i = 0;
+    const interval = setInterval(() => {
+      setDisplayedText(text.slice(0, i));
+      i++;
+      if (i > text.length) {
+        clearInterval(interval);
+        if (onComplete) onComplete();
+      }
+    }, delay);
+    return () => clearInterval(interval);
+  }, [text, delay, onComplete]);
+
+  return <span className="whitespace-pre-wrap">{displayedText}</span>;
+};
+
+// Renders the output for a specific command
+const CommandOutput = ({ command, onComplete }: { command: string, onComplete?: () => void }) => {
+  const [isTyping, setIsTyping] = useState(true);
+
+  const finishTyping = () => {
+    setIsTyping(false);
+    if (onComplete) onComplete();
+  };
+
+  switch (command.toLowerCase().trim()) {
+    case 'whoami':
+    case 'about':
+      return (
+        <div className="text-gray-300">
+          <Typewriter text={PORTFOLIO_DATA.whoami} onComplete={finishTyping} />
+        </div>
+      );
     
-    <motion.div 
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: 0.4, duration: 0.8 }}
-      className="mt-20 w-full max-w-5xl rounded-2xl overflow-hidden border border-border-standard shadow-2xl relative"
-    >
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent z-10" />
-      <div className="aspect-video bg-[#0f1011] flex items-center justify-center relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #7170ff 1px, transparent 0)', backgroundSize: '24px 24px' }} />
-        <div className="relative z-20 flex flex-col items-center gap-4 p-8">
-           <Terminal className="text-brand-violet" size={48} />
-           <div className="text-left font-mono text-sm bg-black/40 p-6 rounded-lg border border-border-subtle max-w-md">
-             <div className="text-brand-violet">$ ai-agent --orchestrate</div>
-             <div className="text-text-tertiary mt-2">Loading LangGraph multi-agent flow...</div>
-             <div className="text-green-400">✓ MCP protocol bridge active</div>
-             <div className="text-green-400">✓ Security layer: Guardrails engaged</div>
-             <div className="text-text-primary mt-2">Agent sequence initiated. Processing \$500M+ volume...</div>
-           </div>
-        </div>
-      </div>
-    </motion.div>
-  </section>
-);
-
-const Section = ({ title, id, children, className }: { title: string, id: string, children: React.ReactNode, className?: string }) => (
-  <section id={id} className={cn("py-24 px-6 md:px-12 max-w-7xl mx-auto", className)}>
-    <div className="flex flex-col mb-12">
-      <h2 className="text-xs font-semibold uppercase tracking-widest text-brand-violet mb-2">{title}</h2>
-      <div className="h-px w-full bg-border-standard" />
-    </div>
-    {children}
-  </section>
-);
-
-const ExperienceItem = ({ role, company, period, description, tags }: any) => (
-  <div className="group relative pl-8 pb-12 last:pb-0 border-l border-border-standard">
-    <div className="absolute left-[-5px] top-0 w-2 h-2 rounded-full bg-border-standard group-hover:bg-brand-violet transition-colors" />
-    <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-4">
-      <div>
-        <h3 className="text-xl font-semibold text-text-primary">{role}</h3>
-        <p className="text-brand-violet font-medium">{company}</p>
-      </div>
-      <span className="text-sm text-text-tertiary mt-1 md:mt-0">{period}</span>
-    </div>
-    <ul className="space-y-3 mb-6">
-      {description.map((item: string, i: number) => (
-        <li key={i} className="text-text-secondary text-sm leading-relaxed flex gap-2">
-          <span className="text-brand-violet mt-1.5">•</span>
-          {item}
-        </li>
-      ))}
-    </ul>
-    <div className="flex flex-wrap gap-2">
-      {tags.map((tag: string) => (
-        <span key={tag} className="text-[10px] px-2 py-0.5 rounded-md border border-border-subtle bg-white/5 text-text-tertiary">
-          {tag}
-        </span>
-      ))}
-    </div>
-  </div>
-);
-
-const ProjectCard = ({ title, description, tags, link, icon: Icon }: any) => (
-  <div className="glass-card rounded-xl p-6 hover:border-brand-violet/30 transition-all group flex flex-col h-full">
-    <div className="w-10 h-10 rounded-lg bg-brand-violet/10 flex items-center justify-center text-brand-violet mb-6 group-hover:scale-110 transition-transform">
-      <Icon size={20} />
-    </div>
-    <h3 className="text-xl font-semibold text-text-primary mb-3 flex items-center justify-between">
-      {title}
-      {link && <ExternalLink size={16} className="text-text-tertiary group-hover:text-text-primary" />}
-    </h3>
-    <p className="text-text-secondary text-sm leading-relaxed mb-6 flex-grow">
-      {description}
-    </p>
-    <div className="flex flex-wrap gap-2">
-      {tags.map((tag: string) => (
-        <span key={tag} className="text-[10px] px-2 py-0.5 rounded-md border border-border-subtle bg-white/5 text-text-tertiary">
-          {tag}
-        </span>
-      ))}
-    </div>
-  </div>
-);
-
-const SkillCategory = ({ title, icon: Icon, skills }: any) => (
-  <div className="flex flex-col gap-4">
-    <div className="flex items-center gap-2 text-text-primary font-medium">
-      <Icon size={18} className="text-brand-violet" />
-      {title}
-    </div>
-    <div className="flex flex-wrap gap-3">
-      {skills.map((skill: string) => (
-        <div key={skill} className="px-4 py-2 rounded-lg glass-card text-sm text-text-secondary hover:text-text-primary hover:border-brand-violet/20 transition-all cursor-default">
-          {skill}
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-const App = () => {
-  return (
-    <div className="bg-background min-h-screen text-text-primary selection:bg-brand-violet/30">
-      <Navbar />
+    case 'experience':
+    case 'exp':
+      return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 text-gray-300">
+          {PORTFOLIO_DATA.experience.map((exp, i) => (
+            <div key={i} className="border-l border-brand-violet/30 pl-4 py-1">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline">
+                <span className="font-semibold text-brand-violet">{exp.role}</span>
+                <span className="text-sm text-gray-500">{exp.period}</span>
+              </div>
+              <div className="text-gray-400 mb-2">{exp.company}</div>
+              <ul className="space-y-1">
+                {exp.bullets.map((b, j) => (
+                  <li key={j} className="text-sm before:content-['-'] before:mr-2 before:text-gray-600">{b}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+          {/* Faking a typing delay for rich components */}
+          <Typewriter text="" onComplete={finishTyping} delay={100} />
+        </motion.div>
+      );
       
-      <main>
-        <Hero />
-        
-        <Section title="Experience" id="experience">
-          <div className="max-w-4xl">
-            <ExperienceItem 
-              role="Software Engineer — AI Platform & Payments"
-              company="Visa Inc."
-              period="January 2024 — Present"
-              description={[
-                "Architected AI-powered release automation platform using LangGraph multi-agent orchestration and MCP protocol; reduced release documentation time from 8 hours to 15 minutes across 12+ production releases.",
-                "Built real-time transaction monitoring dashboard in React 18 with TypeScript, leveraging React Query and Recharts; adopted by 3 operations teams to triage payment anomalies 40% faster.",
-                "Engineered Tier-0 B2B payment APIs using Java 17 and Spring Boot 3.4, processing $500M+ annually with 99.99% uptime and sub-400ms P99 latency.",
-                "Owned end-to-end CI/CD pipeline with SonarQube and Checkmarx SAST; deployed micro-frontends to Kubernetes via Module Federation."
-              ]}
-              tags={["React", "TypeScript", "Java", "Spring Boot", "LangGraph", "Kubernetes", "Redis"]}
-            />
-            <ExperienceItem 
-              role="Software Engineering Intern"
-              company="Visa Inc."
-              period="May 2023 — August 2023"
-              description={[
-                "Developed LSTM neural network using TensorFlow/Keras achieving 95% accuracy in API anomaly detection, enabling real-time fraud alerts.",
-                "Built model-evaluation UI in React with D3.js, enabling data scientists to compare ML model performance across datasets; reduced experiment review cycles by 30%.",
-                "Optimized high-traffic Java API endpoints handling 500+ TPS, achieving 50% latency reduction."
-              ]}
-              tags={["TensorFlow", "Keras", "Python", "React", "D3.js", "Java"]}
-            />
-            <ExperienceItem 
-              role="Software Engineering Intern — Embedded Systems"
-              company="VIZIO Inc."
-              period="June 2022 — August 2022"
-              description={[
-                "Engineered OTA firmware update system in C/C++ with delta patching and A/B partition failover, reducing update sizes by 70% and boot times by 20% across 19M+ devices.",
-                "Developed HAL interfaces and device drivers for ARM Cortex-M microcontrollers implementing I2C/SPI/UART protocols.",
-                "Automated firmware builds across 15+ hardware SKUs using Docker and AWS CodePipeline, cutting release preparation time by 50%."
-              ]}
-              tags={["C/C++", "Embedded Systems", "Docker", "AWS", "Firmware"]}
-            />
-          </div>
-        </Section>
-
-        <Section title="Featured Projects" id="projects">
-          <div className="grid md:grid-cols-2 gap-6">
-            <ProjectCard 
-              title="Agent-Redteam"
-              description="A high-performance autonomous adversarial AI tester built in Rust. Features a neuroevolution engine using genetic algorithms and reinforcement learning (Multi-Armed Bandits) to evolve attack patterns against AI coding agents."
-              tags={["Rust", "Reinforcement Learning", "Neuroevolution", "WebSockets"]}
-              icon={Zap}
-            />
-            <ProjectCard 
-              title="CubeVision"
-              description="Real-time Rubik's Cube solver using computer vision. Achieved 98% color detection accuracy with HSV segmentation and implemented Korf's IDA* algorithm to solve any cube in under 20 moves."
-              tags={["Python", "OpenCV", "NumPy", "C++"]}
-              icon={Layers}
-            />
-          </div>
-        </Section>
-
-        <Section title="Skills" id="skills">
-          <div className="grid md:grid-cols-2 gap-12">
-            <SkillCategory 
-              title="AI & Machine Learning"
-              icon={Cpu}
-              skills={["Agentic Workflows (LangGraph)", "MCP Protocol", "Reinforcement Learning", "Neuroevolution", "LLM Security", "TensorFlow", "PyTorch"]}
-            />
-            <SkillCategory 
-              title="Core Engineering"
-              icon={Code2}
-              skills={["Rust", "Python", "Java", "TypeScript", "Go", "C/C++"]}
-            />
-            <SkillCategory 
-              title="Systems & Infrastructure"
-              icon={Database}
-              skills={["Kubernetes", "Docker", "AWS", "Kafka", "PostgreSQL", "Redis", "Terraform"]}
-            />
-            <SkillCategory 
-              title="Web Architecture"
-              icon={Globe}
-              skills={["React / Next.js", "Spring Boot", "FastAPI", "Microservices", "GraphQL", "Module Federation"]}
-            />
-          </div>
-        </Section>
-        
-        <Section title="Education" id="education" className="pb-32">
-          <div className="space-y-8">
-            <div className="flex flex-col md:flex-row md:justify-between md:items-start">
-              <div>
-                <h3 className="text-xl font-semibold text-text-primary">Bachelor of Science in Computer Science</h3>
-                <p className="text-text-secondary">The University of Texas at Dallas</p>
-                <p className="text-sm text-text-tertiary">GPA: 3.82/4.0 • Dean's List</p>
+    case 'projects':
+      return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid sm:grid-cols-2 gap-4 mt-2">
+          {PORTFOLIO_DATA.projects.map((p, i) => {
+            const Icon = p.icon;
+            return (
+              <div key={i} className="border border-white/10 bg-white/5 p-4 rounded-md">
+                <div className="flex items-center gap-2 mb-2">
+                  <Icon size={16} className="text-brand-violet" />
+                  <span className="font-bold text-white">{p.title}</span>
+                </div>
+                <p className="text-sm text-gray-400 mb-3">{p.desc}</p>
+                <div className="text-xs text-brand-violet/70 font-mono">[{p.tech}]</div>
               </div>
-              <span className="text-sm text-text-tertiary mt-1 md:mt-0">2022 — 2023</span>
+            );
+          })}
+          <Typewriter text="" onComplete={finishTyping} delay={100} />
+        </motion.div>
+      );
+
+    case 'skills':
+      return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+          {Object.entries(PORTFOLIO_DATA.skills).map(([cat, skills]) => (
+            <div key={cat} className="flex flex-col sm:flex-row sm:gap-4">
+              <span className="text-brand-violet w-24 shrink-0 font-semibold">{cat}</span>
+              <span className="text-gray-300">{skills}</span>
             </div>
-            <div className="flex flex-col md:flex-row md:justify-between md:items-start">
-              <div>
-                <h3 className="text-xl font-semibold text-text-primary">Associate of Science in Computer Science</h3>
-                <p className="text-text-secondary">Austin Community College</p>
-                <p className="text-sm text-text-tertiary">GPA: 3.95/4.0 • Honors</p>
-              </div>
-              <span className="text-sm text-text-tertiary mt-1 md:mt-0">2019 — 2021</span>
+          ))}
+          <Typewriter text="" onComplete={finishTyping} delay={100} />
+        </motion.div>
+      );
+
+    case 'contact':
+      return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2">
+          {Object.entries(PORTFOLIO_DATA.contact).map(([platform, link]) => (
+            <div key={platform} className="flex items-center gap-2">
+              <span className="text-gray-500 w-20">{platform}:</span>
+              <a href={platform === 'Email' ? `mailto:${link}` : `https://${link}`} target="_blank" rel="noreferrer" className="text-brand-violet hover:underline flex items-center gap-1">
+                {link} <ExternalLink size={12} />
+              </a>
             </div>
-          </div>
-        </Section>
+          ))}
+          <Typewriter text="" onComplete={finishTyping} delay={100} />
+        </motion.div>
+      );
+
+    case 'help':
+      return (
+        <div className="text-gray-300 space-y-2">
+          <Typewriter text="Available commands:" onComplete={finishTyping} delay={10} />
+          {!isTyping && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-2 gap-2 mt-2 max-w-xs font-mono text-sm">
+              <div className="text-brand-violet">whoami</div><div className="text-gray-500">About me</div>
+              <div className="text-brand-violet">experience</div><div className="text-gray-500">Work history</div>
+              <div className="text-brand-violet">projects</div><div className="text-gray-500">Featured work</div>
+              <div className="text-brand-violet">skills</div><div className="text-gray-500">Technical skills</div>
+              <div className="text-brand-violet">contact</div><div className="text-gray-500">Get in touch</div>
+              <div className="text-brand-violet">clear</div><div className="text-gray-500">Clear terminal</div>
+            </motion.div>
+          )}
+        </div>
+      );
+
+    case '':
+      finishTyping();
+      return null;
+
+    default:
+      return (
+        <div className="text-red-400">
+          <Typewriter text={`Command not found: ${command}. Type 'help' for available commands.`} onComplete={finishTyping} />
+        </div>
+      );
+  }
+};
+
+type HistoryItem = {
+  id: string;
+  type: 'input' | 'output' | 'system';
+  content: string;
+};
+
+export default function App() {
+  const [input, setInput] = useState('');
+  const [history, setHistory] = useState<HistoryItem[]>([
+    { id: '1', type: 'system', content: 'Initializing Claude-inspired environment...' },
+    { id: '2', type: 'system', content: 'Connection established. Security protocols active.' },
+  ]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Focus input on load and any click on the app
+  useEffect(() => {
+    inputRef.current?.focus();
+    
+    // Initial boot sequence
+    const timer = setTimeout(() => {
+      setHistory(h => [
+        ...h, 
+        { id: Date.now().toString(), type: 'output', content: "Welcome to Ahmed's terminal. Type 'help' to see available commands." }
+      ]);
+    }, 1500);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [history, isProcessing]);
+
+  const handleCommand = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !isProcessing) {
+      const cmd = input.trim();
+      setInput('');
+      
+      if (cmd.toLowerCase() === 'clear') {
+        setHistory([]);
+        return;
+      }
+
+      setHistory(h => [...h, { id: Date.now().toString(), type: 'input', content: cmd }]);
+      
+      if (cmd) {
+        setIsProcessing(true);
+        // Simulate network delay
+        setTimeout(() => {
+          setHistory(h => [...h, { id: (Date.now() + 1).toString(), type: 'output', content: cmd }]);
+          setIsProcessing(false);
+        }, 400 + Math.random() * 400);
+      }
+    }
+  };
+
+  const executeCommand = (cmd: string) => {
+    if (isProcessing) return;
+    setInput('');
+    setHistory(h => [...h, { id: Date.now().toString(), type: 'input', content: cmd }]);
+    setIsProcessing(true);
+    setTimeout(() => {
+      setHistory(h => [...h, { id: (Date.now() + 1).toString(), type: 'output', content: cmd }]);
+      setIsProcessing(false);
+    }, 400 + Math.random() * 400);
+  };
+
+  return (
+    <div 
+      className="min-h-screen bg-[#0d0d0d] text-[#e5e5e5] font-mono selection:bg-brand-violet/30 flex flex-col cursor-text"
+      onClick={() => inputRef.current?.focus()}
+    >
+      {/* Top Bar - "Claude" Style */}
+      <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-[#0d0d0d]/80 backdrop-blur-md border-b border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="w-3 h-3 rounded-full bg-brand-violet shadow-[0_0_10px_rgba(113,112,255,0.8)] animate-pulse" />
+          <span className="font-medium text-sm text-gray-300 tracking-wide flex items-center gap-2">
+            <Sparkles size={14} className="text-brand-violet" />
+            Ahmed_Eid_OS <span className="text-gray-600 text-xs ml-1">v2.0.26</span>
+          </span>
+        </div>
+        <div className="flex gap-4 text-xs text-gray-500">
+          <button onClick={() => executeCommand('help')} className="hover:text-white transition-colors">[help]</button>
+          <a href="https://github.com/AME-CS" target="_blank" rel="noreferrer" className="hover:text-white transition-colors flex items-center gap-1">
+            [GitHub]
+          </a>
+        </div>
+      </header>
+
+      {/* Main Terminal Area */}
+      <main className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 custom-scrollbar pb-32">
+        <div className="max-w-4xl mx-auto space-y-8">
+          
+          <AnimatePresence initial={false}>
+            {history.map((item) => (
+              <motion.div 
+                key={item.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="group"
+              >
+                {item.type === 'system' && (
+                  <div className="text-gray-500 text-sm flex gap-2">
+                    <span className="text-gray-600">[system]</span>
+                    <Typewriter text={item.content} />
+                  </div>
+                )}
+
+                {item.type === 'input' && (
+                  <div className="flex gap-3 text-gray-300">
+                    <span className="text-brand-violet shrink-0">➜</span>
+                    <span className="text-white">{item.content}</span>
+                  </div>
+                )}
+
+                {item.type === 'output' && item.content === "Welcome to Ahmed's terminal. Type 'help' to see available commands." && (
+                  <div className="text-gray-300 py-2">
+                    <Typewriter text={item.content} />
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 2.5 }}
+                      className="mt-6 flex flex-wrap gap-2"
+                    >
+                      {['whoami', 'experience', 'projects', 'skills'].map(cmd => (
+                        <button 
+                          key={cmd}
+                          onClick={(e) => { e.stopPropagation(); executeCommand(cmd); }}
+                          className="px-3 py-1 rounded border border-white/10 bg-white/5 text-xs text-gray-400 hover:text-brand-violet hover:border-brand-violet/50 transition-colors"
+                        >
+                          {cmd}
+                        </button>
+                      ))}
+                    </motion.div>
+                  </div>
+                )}
+
+                {item.type === 'output' && item.content !== "Welcome to Ahmed's terminal. Type 'help' to see available commands." && (
+                  <div className="mt-2 pl-6 border-l-2 border-white/5 relative">
+                    <div className="absolute -left-[13px] top-0 bg-[#0d0d0d] p-1">
+                      <Sparkles size={14} className="text-brand-violet" />
+                    </div>
+                    <CommandOutput command={item.content} />
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </AnimatePresence>
+
+          {isProcessing && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-3 text-brand-violet">
+              <span>➜</span>
+              <Loader2 size={16} className="animate-spin" />
+            </motion.div>
+          )}
+
+          <div ref={bottomRef} />
+        </div>
       </main>
 
-      <footer className="py-12 px-6 md:px-12 border-t border-border-standard bg-background-panel">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-brand-violet/20 flex items-center justify-center text-brand-violet text-xs font-bold">A</div>
-            <p className="text-text-tertiary text-sm">© 2025 Ahmed Eid. Built with React & Linear Design.</p>
-          </div>
-          <div className="flex gap-6">
-            <a href="mailto:ahmed.maaz.eid@gmail.com" className="text-text-tertiary hover:text-text-primary transition-colors">
-              <Mail size={18} />
-            </a>
-            <a href="https://github.com/AME-CS" className="text-text-tertiary hover:text-text-primary transition-colors">
-              <GithubIcon size={18} />
-            </a>
-            <a href="https://linkedin.com/in/ahmed-maaz-eid" className="text-text-tertiary hover:text-text-primary transition-colors">
-              <LinkedinIcon size={18} />
-            </a>
+      {/* Input Area */}
+      <footer className="fixed bottom-0 w-full bg-gradient-to-t from-[#0d0d0d] via-[#0d0d0d] to-transparent pt-10 pb-6 px-4 md:px-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="relative flex items-center bg-[#151515] border border-white/10 rounded-lg p-3 shadow-2xl focus-within:border-brand-violet/50 focus-within:shadow-[0_0_20px_rgba(113,112,255,0.15)] transition-all group">
+            <span className="text-brand-violet font-bold mr-3 flex items-center gap-2 select-none">
+              <Command size={16} /> 
+              <span className="hidden sm:inline text-gray-500 font-normal">guest@portfolio ~$</span>
+            </span>
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleCommand}
+              disabled={isProcessing}
+              className="flex-1 bg-transparent border-none outline-none text-white font-mono placeholder:text-gray-600 disabled:opacity-50"
+              placeholder={isProcessing ? "Processing..." : "Type a command..."}
+              autoComplete="off"
+              autoFocus
+              spellCheck="false"
+            />
+            {/* Blinking Cursor block - just for aesthetics when not focused, or to overlay */}
+            <div className={cn(
+              "w-2 h-5 bg-brand-violet/80 ml-1 transition-opacity",
+              input.length === 0 && !isProcessing ? "animate-pulse" : "opacity-0"
+            )} />
+            
+            <div className="absolute right-3 text-[10px] text-gray-600 hidden sm:block">
+              Press Enter ↵
+            </div>
           </div>
         </div>
       </footer>
     </div>
   );
-};
-
-export default App;
+}
