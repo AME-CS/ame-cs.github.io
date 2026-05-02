@@ -1,10 +1,9 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../tailwind.config.js";
 
 :root {
-  background-color: #0d0d0d;
-  color: #e5e5e5;
+  background-color: #08090a;
+  color: #f7f8f8;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -15,8 +14,8 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #0d0d0d;
-  color: #e5e5e5;
+  background-color: #08090a;
+  color: #f7f8f8;
 }
 
 /* Custom scrollbar for the terminal feel */
@@ -37,4 +36,35 @@ body {
 /* Remove default focus outlines for a cleaner CLI look */
 input:focus {
   outline: none;
+}
+
+/* CRT Glow and Text Shadow */
+.crt-glow {
+  text-shadow: 0 0 4px rgba(113, 112, 255, 0.3);
+}
+
+/* Block Cursor */
+.terminal-input {
+  caret-color: transparent;
+  position: relative;
+}
+
+.cursor-block {
+  display: inline-block;
+  width: 9px;
+  height: 18px;
+  background-color: #7170ff;
+  animation: blink 1s step-end infinite;
+  vertical-align: text-bottom;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Ambient glow for the background */
+.ambient-bg {
+  background: radial-gradient(circle at 50% 0%, rgba(113,112,255,0.05) 0%, rgba(8,9,10,1) 60%);
 }

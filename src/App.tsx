@@ -1,13 +1,5 @@
 import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Command, 
-  Zap, 
-  Layers,
-  ExternalLink,
-  Loader2,
-  Sparkles
-} from 'lucide-react';
+import { Command, ExternalLink } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -19,8 +11,10 @@ function cn(...inputs: ClassValue[]) {
 // DATA
 // ----------------------------------------------------------------------
 const PORTFOLIO_DATA = {
-  whoami: `Hi, I'm Ahmed Eid. 
-I'm an AI Architect and Software Engineer specializing in autonomous agent orchestration, adversarial ML, and high-scale distributed systems. Currently building at Visa.`,
+  whoami: `Ahmed Eid
+AI Architect & Software Engineer
+Specializing in autonomous agent orchestration, adversarial ML, and high-scale distributed systems.
+Currently building at Visa.`,
   
   experience: [
     {
@@ -58,18 +52,16 @@ I'm an AI Architect and Software Engineer specializing in autonomous agent orche
       title: "Agent-Redteam",
       desc: "Autonomous adversarial AI tester built in Rust. Features a neuroevolution engine using genetic algorithms and RL to evolve attack patterns against AI coding agents.",
       tech: "Rust, RL, WebSockets",
-      icon: Zap
     },
     {
       title: "CubeVision",
       desc: "Real-time Rubik's Cube solver using computer vision. Achieved 98% color detection accuracy and implemented Korf's IDA* algorithm.",
       tech: "Python, OpenCV, C++",
-      icon: Layers
     }
   ],
 
   skills: {
-    "AI & ML": "Agentic Workflows (LangGraph), MCP Protocol, RL, LLM Security, TensorFlow",
+    "AI/ML": "Agentic Workflows (LangGraph), MCP Protocol, RL, LLM Security, TensorFlow",
     "Core": "Rust, Python, Java, TypeScript, Go, C/C++",
     "Systems": "Kubernetes, Docker, AWS, Kafka, PostgreSQL",
     "Web": "React, Next.js, Spring Boot, FastAPI"
@@ -86,7 +78,7 @@ I'm an AI Architect and Software Engineer specializing in autonomous agent orche
 // COMPONENTS
 // ----------------------------------------------------------------------
 
-const Typewriter = ({ text, delay = 15, onComplete }: { text: string, delay?: number, onComplete?: () => void }) => {
+const Typewriter = ({ text, delay = 10, onComplete }: { text: string, delay?: number, onComplete?: () => void }) => {
   const [displayedText, setDisplayedText] = useState('');
   
   useEffect(() => {
@@ -102,123 +94,139 @@ const Typewriter = ({ text, delay = 15, onComplete }: { text: string, delay?: nu
     return () => clearInterval(interval);
   }, [text, delay, onComplete]);
 
-  return <span className="whitespace-pre-wrap">{displayedText}</span>;
+  return <span>{displayedText}</span>;
 };
 
+const BrailleSpinner = () => {
+  const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+  const [frameIdx, setFrameIdx] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFrameIdx((prev) => (prev + 1) % frames.length);
+    }, 80);
+    return () => clearInterval(interval);
+  }, []);
+
+  return <span className="text-brand-violet">{frames[frameIdx]}</span>;
+};
+
+const HelpCommand = ({ onCommandClick }: { onCommandClick: (cmd: string) => void }) => {
+  const commands = [
+    { cmd: 'whoami', desc: 'Display user information' },
+    { cmd: 'experience', desc: 'List work experience' },
+    { cmd: 'projects', desc: 'Show featured projects' },
+    { cmd: 'skills', desc: 'Print technical skills' },
+    { cmd: 'contact', desc: 'Show contact links' },
+    { cmd: 'clear', desc: 'Clear the terminal output' }
+  ];
+
+  return (
+    <div className="mt-1">
+      <div className="text-text-secondary mb-2">Claude Code OS (v2.0.26) - Help</div>
+      <div className="space-y-1">
+        {commands.map(({ cmd, desc }) => (
+          <div key={cmd} className="flex flex-col sm:flex-row sm:items-center">
+            <span 
+              className="text-brand-violet w-32 cursor-pointer hover:underline hover:text-brand-hover transition-colors"
+              onClick={() => onCommandClick(cmd)}
+            >
+              {cmd}
+            </span>
+            <span className="text-text-tertiary text-sm">{desc}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // Renders the output for a specific command
-const CommandOutput = ({ command, onComplete }: { command: string, onComplete?: () => void }) => {
-  const [isTyping, setIsTyping] = useState(true);
-
-  const finishTyping = () => {
-    setIsTyping(false);
-    if (onComplete) onComplete();
-  };
-
+const CommandOutput = ({ command, onCommandClick }: { command: string, onCommandClick: (cmd: string) => void }) => {
   switch (command.toLowerCase().trim()) {
     case 'whoami':
     case 'about':
       return (
-        <div className="text-gray-300">
-          <Typewriter text={PORTFOLIO_DATA.whoami} onComplete={finishTyping} />
+        <div className="mt-1 text-text-primary whitespace-pre-wrap leading-relaxed">
+          {PORTFOLIO_DATA.whoami}
         </div>
       );
     
     case 'experience':
     case 'exp':
       return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 text-gray-300">
+        <div className="mt-1 space-y-5">
           {PORTFOLIO_DATA.experience.map((exp, i) => (
-            <div key={i} className="border-l border-brand-violet/30 pl-4 py-1">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline">
-                <span className="font-semibold text-brand-violet">{exp.role}</span>
-                <span className="text-sm text-gray-500">{exp.period}</span>
+            <div key={i} className="flex flex-col">
+              <div className="flex flex-col sm:flex-row sm:items-baseline gap-2">
+                <span className="text-brand-violet font-medium">{exp.company}</span>
+                <span className="text-text-secondary hidden sm:inline">•</span>
+                <span className="text-text-primary">{exp.role}</span>
               </div>
-              <div className="text-gray-400 mb-2">{exp.company}</div>
-              <ul className="space-y-1">
+              <div className="text-text-tertiary text-sm mb-2">{exp.period}</div>
+              <ul className="space-y-1 text-text-secondary">
                 {exp.bullets.map((b, j) => (
-                  <li key={j} className="text-sm before:content-['-'] before:mr-2 before:text-gray-600">{b}</li>
+                  <li key={j} className="text-sm pl-4 relative before:content-['›'] before:absolute before:left-0 before:text-brand-violet">
+                    {b}
+                  </li>
                 ))}
               </ul>
             </div>
           ))}
-          {/* Faking a typing delay for rich components */}
-          <Typewriter text="" onComplete={finishTyping} delay={100} />
-        </motion.div>
+        </div>
       );
       
     case 'projects':
       return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid sm:grid-cols-2 gap-4 mt-2">
-          {PORTFOLIO_DATA.projects.map((p, i) => {
-            const Icon = p.icon;
-            return (
-              <div key={i} className="border border-white/10 bg-white/5 p-4 rounded-md">
-                <div className="flex items-center gap-2 mb-2">
-                  <Icon size={16} className="text-brand-violet" />
-                  <span className="font-bold text-white">{p.title}</span>
-                </div>
-                <p className="text-sm text-gray-400 mb-3">{p.desc}</p>
-                <div className="text-xs text-brand-violet/70 font-mono">[{p.tech}]</div>
+        <div className="mt-1 space-y-5">
+          {PORTFOLIO_DATA.projects.map((p, i) => (
+            <div key={i} className="flex flex-col">
+              <div className="flex items-baseline gap-3">
+                <span className="text-brand-violet font-medium">{p.title}</span>
+                <span className="text-text-tertiary text-xs">[{p.tech}]</span>
               </div>
-            );
-          })}
-          <Typewriter text="" onComplete={finishTyping} delay={100} />
-        </motion.div>
+              <p className="text-text-secondary text-sm mt-1">{p.desc}</p>
+            </div>
+          ))}
+        </div>
       );
 
     case 'skills':
       return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+        <div className="mt-1 space-y-2">
           {Object.entries(PORTFOLIO_DATA.skills).map(([cat, skills]) => (
-            <div key={cat} className="flex flex-col sm:flex-row sm:gap-4">
-              <span className="text-brand-violet w-24 shrink-0 font-semibold">{cat}</span>
-              <span className="text-gray-300">{skills}</span>
+            <div key={cat} className="flex flex-col sm:flex-row sm:items-baseline">
+              <span className="text-brand-violet w-24 shrink-0 font-medium">{cat}</span>
+              <span className="text-text-secondary text-sm">{skills}</span>
             </div>
           ))}
-          <Typewriter text="" onComplete={finishTyping} delay={100} />
-        </motion.div>
+        </div>
       );
 
     case 'contact':
       return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2">
+        <div className="mt-1 space-y-1">
           {Object.entries(PORTFOLIO_DATA.contact).map(([platform, link]) => (
-            <div key={platform} className="flex items-center gap-2">
-              <span className="text-gray-500 w-20">{platform}:</span>
-              <a href={platform === 'Email' ? `mailto:${link}` : `https://${link}`} target="_blank" rel="noreferrer" className="text-brand-violet hover:underline flex items-center gap-1">
+            <div key={platform} className="flex items-center gap-4">
+              <span className="text-text-tertiary w-20">{platform}</span>
+              <a href={platform === 'Email' ? `mailto:${link}` : `https://${link}`} target="_blank" rel="noreferrer" className="text-brand-violet hover:underline hover:text-brand-hover flex items-center gap-1 text-sm">
                 {link} <ExternalLink size={12} />
               </a>
             </div>
           ))}
-          <Typewriter text="" onComplete={finishTyping} delay={100} />
-        </motion.div>
-      );
-
-    case 'help':
-      return (
-        <div className="text-gray-300 space-y-2">
-          <Typewriter text="Available commands:" onComplete={finishTyping} delay={10} />
-          {!isTyping && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-2 gap-2 mt-2 max-w-xs font-mono text-sm">
-              <div className="text-brand-violet">whoami</div><div className="text-gray-500">About me</div>
-              <div className="text-brand-violet">experience</div><div className="text-gray-500">Work history</div>
-              <div className="text-brand-violet">projects</div><div className="text-gray-500">Featured work</div>
-              <div className="text-brand-violet">skills</div><div className="text-gray-500">Technical skills</div>
-              <div className="text-brand-violet">contact</div><div className="text-gray-500">Get in touch</div>
-              <div className="text-brand-violet">clear</div><div className="text-gray-500">Clear terminal</div>
-            </motion.div>
-          )}
         </div>
       );
 
+    case 'help':
+      return <HelpCommand onCommandClick={onCommandClick} />;
+
     case '':
-      finishTyping();
       return null;
 
     default:
       return (
-        <div className="text-red-400">
-          <Typewriter text={`Command not found: ${command}. Type 'help' for available commands.`} onComplete={finishTyping} />
+        <div className="mt-1 text-red-400 text-sm">
+          claude: command not found: {command}
         </div>
       );
   }
@@ -228,198 +236,238 @@ type HistoryItem = {
   id: string;
   type: 'input' | 'output' | 'system';
   content: string;
+  command?: string;
+  isTyping?: boolean;
 };
 
 export default function App() {
   const [input, setInput] = useState('');
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const commands = ['whoami', 'experience', 'projects', 'skills', 'contact', 'help', 'clear'];
   const [history, setHistory] = useState<HistoryItem[]>([
-    { id: '1', type: 'system', content: 'Initializing Claude-inspired environment...' },
-    { id: '2', type: 'system', content: 'Connection established. Security protocols active.' },
+    { id: 'boot-1', type: 'system', content: 'Starting Claude Environment v2.0.26...' },
   ]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isBooting, setIsBooting] = useState(true);
+  const [currentDir] = useState('~/portfolio-site');
   
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Focus input on load and any click on the app
   useEffect(() => {
     inputRef.current?.focus();
     
-    // Initial boot sequence
-    const timer = setTimeout(() => {
-      setHistory(h => [
-        ...h, 
-        { id: Date.now().toString(), type: 'output', content: "Welcome to Ahmed's terminal. Type 'help' to see available commands." }
-      ]);
-    }, 1500);
-    
-    return () => clearTimeout(timer);
+    const bootSequence = async () => {
+      await new Promise(r => setTimeout(r, 600));
+      setHistory(h => [...h, { id: 'boot-2', type: 'system', content: 'Loaded system context and memory.' }]);
+      await new Promise(r => setTimeout(r, 400));
+      setHistory(h => [...h, { 
+        id: 'boot-3', 
+        type: 'output', 
+        content: "Welcome to Claude Terminal. Type 'help' to see available commands.",
+        command: 'welcome' 
+      }]);
+      setIsBooting(false);
+    };
+
+    bootSequence();
   }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [history, isProcessing]);
 
-  const handleCommand = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !isProcessing) {
-      const cmd = input.trim();
-      setInput('');
-      
-      if (cmd.toLowerCase() === 'clear') {
-        setHistory([]);
-        return;
-      }
+  const executeCommand = async (cmd: string) => {
+    if (isProcessing || isBooting) return;
+    
+    const trimmedCmd = cmd.trim();
+    setInput('');
+    setHistoryIndex(-1);
+    
+    if (trimmedCmd.toLowerCase() === 'clear') {
+      setHistory([]);
+      return;
+    }
 
-      setHistory(h => [...h, { id: Date.now().toString(), type: 'input', content: cmd }]);
+    setHistory(h => [...h, { id: Date.now().toString(), type: 'input', content: trimmedCmd }]);
+    
+    if (trimmedCmd) {
+      setIsProcessing(true);
+      // Simulate think/network time
+      await new Promise(r => setTimeout(r, 300 + Math.random() * 500));
       
-      if (cmd) {
-        setIsProcessing(true);
-        // Simulate network delay
-        setTimeout(() => {
-          setHistory(h => [...h, { id: (Date.now() + 1).toString(), type: 'output', content: cmd }]);
-          setIsProcessing(false);
-        }, 400 + Math.random() * 400);
-      }
+      setHistory(h => [...h, { 
+        id: (Date.now() + 1).toString(), 
+        type: 'output', 
+        content: '', // Actual output rendered by component
+        command: trimmedCmd 
+      }]);
+      setIsProcessing(false);
     }
   };
 
-  const executeCommand = (cmd: string) => {
-    if (isProcessing) return;
-    setInput('');
-    setHistory(h => [...h, { id: Date.now().toString(), type: 'input', content: cmd }]);
-    setIsProcessing(true);
-    setTimeout(() => {
-      setHistory(h => [...h, { id: (Date.now() + 1).toString(), type: 'output', content: cmd }]);
-      setIsProcessing(false);
-    }, 400 + Math.random() * 400);
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      executeCommand(input);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const inputHistory = history.filter(h => h.type === 'input');
+      if (inputHistory.length > 0) {
+        const newIndex = historyIndex < inputHistory.length - 1 ? historyIndex + 1 : historyIndex;
+        setHistoryIndex(newIndex);
+        setInput(inputHistory[inputHistory.length - 1 - newIndex].content);
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const inputHistory = history.filter(h => h.type === 'input');
+      if (historyIndex > 0) {
+        const newIndex = historyIndex - 1;
+        setHistoryIndex(newIndex);
+        setInput(inputHistory[inputHistory.length - 1 - newIndex].content);
+      } else if (historyIndex === 0) {
+        setHistoryIndex(-1);
+        setInput('');
+      }
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      if (input) {
+        const match = commands.find(cmd => cmd.startsWith(input.toLowerCase()));
+        if (match) setInput(match);
+      }
+    } else if (e.key === 'c' && e.ctrlKey) {
+      e.preventDefault();
+      setInput('');
+      setHistoryIndex(-1);
+    } else if (e.key === 'l' && e.ctrlKey) {
+      e.preventDefault();
+      setHistory([]);
+      setInput('');
+      setHistoryIndex(-1);
+    }
   };
 
   return (
     <div 
-      className="min-h-screen bg-[#0d0d0d] text-[#e5e5e5] font-mono selection:bg-brand-violet/30 flex flex-col cursor-text"
-      onClick={() => inputRef.current?.focus()}
+      className="min-h-screen bg-background text-text-primary font-mono text-[14px] leading-relaxed selection:bg-brand-violet/30 flex flex-col cursor-text relative overflow-hidden ambient-bg crt-glow"
+      onClick={() => {
+        // Only focus if user is not selecting text
+        if (window.getSelection()?.toString().length === 0) {
+          inputRef.current?.focus();
+        }
+      }}
     >
-      {/* Top Bar - "Claude" Style */}
-      <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-[#0d0d0d]/80 backdrop-blur-md border-b border-white/5">
-        <div className="flex items-center gap-3">
-          <div className="w-3 h-3 rounded-full bg-brand-violet shadow-[0_0_10px_rgba(113,112,255,0.8)] animate-pulse" />
-          <span className="font-medium text-sm text-gray-300 tracking-wide flex items-center gap-2">
-            <Sparkles size={14} className="text-brand-violet" />
-            Ahmed_Eid_OS <span className="text-gray-600 text-xs ml-1">v2.0.26</span>
-          </span>
+      {/* Mac-like Terminal Header */}
+      <header className="flex-none flex items-center px-4 py-2 bg-background border-b border-border-primary select-none sticky top-0 z-10">
+        <div className="flex space-x-2 w-20">
+          <div className="w-3 h-3 rounded-full bg-[#ff5f56] border border-black/20"></div>
+          <div className="w-3 h-3 rounded-full bg-[#ffbd2e] border border-black/20"></div>
+          <div className="w-3 h-3 rounded-full bg-[#27c93f] border border-black/20"></div>
         </div>
-        <div className="flex gap-4 text-xs text-gray-500">
-          <button onClick={() => executeCommand('help')} className="hover:text-white transition-colors">[help]</button>
-          <a href="https://github.com/AME-CS" target="_blank" rel="noreferrer" className="hover:text-white transition-colors flex items-center gap-1">
-            [GitHub]
-          </a>
+        <div className="flex-1 flex justify-center items-center text-xs text-text-tertiary gap-2">
+          <Command size={12} className="opacity-70" />
+          <span>ahmedeid — claude-term — 80×24</span>
+        </div>
+        <div className="w-20 flex justify-end">
+          <div className="w-2 h-2 rounded-full bg-brand-violet opacity-80 blur-[2px] animate-pulse"></div>
         </div>
       </header>
 
       {/* Main Terminal Area */}
-      <main className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 custom-scrollbar pb-32">
-        <div className="max-w-4xl mx-auto space-y-8">
-          
-          <AnimatePresence initial={false}>
-            {history.map((item) => (
-              <motion.div 
-                key={item.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="group"
-              >
-                {item.type === 'system' && (
-                  <div className="text-gray-500 text-sm flex gap-2">
-                    <span className="text-gray-600">[system]</span>
-                    <Typewriter text={item.content} />
-                  </div>
-                )}
+      <main className="flex-1 overflow-y-auto px-4 md:px-6 py-4 custom-scrollbar flex flex-col">
+        <div className="max-w-4xl w-full space-y-4 pb-20">
+          {history.map((item) => (
+            <div key={item.id} className="group">
+              {item.type === 'system' && (
+                <div className="text-text-tertiary text-sm flex gap-2 items-start">
+                  <span className="select-none">⚙</span>
+                  <Typewriter text={item.content} />
+                </div>
+              )}
 
-                {item.type === 'input' && (
-                  <div className="flex gap-3 text-gray-300">
-                    <span className="text-brand-violet shrink-0">➜</span>
-                    <span className="text-white">{item.content}</span>
+              {item.type === 'input' && (
+                <div className="flex flex-col mt-2">
+                  <div className="flex items-center gap-2 text-text-tertiary select-none text-sm mb-1">
+                    <span className="text-brand-violet">╭─</span>
+                    <span>{currentDir}</span>
                   </div>
-                )}
-
-                {item.type === 'output' && item.content === "Welcome to Ahmed's terminal. Type 'help' to see available commands." && (
-                  <div className="text-gray-300 py-2">
-                    <Typewriter text={item.content} />
-                    <motion.div 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 2.5 }}
-                      className="mt-6 flex flex-wrap gap-2"
-                    >
-                      {['whoami', 'experience', 'projects', 'skills'].map(cmd => (
-                        <button 
-                          key={cmd}
-                          onClick={(e) => { e.stopPropagation(); executeCommand(cmd); }}
-                          className="px-3 py-1 rounded border border-white/10 bg-white/5 text-xs text-gray-400 hover:text-brand-violet hover:border-brand-violet/50 transition-colors"
-                        >
-                          {cmd}
-                        </button>
-                      ))}
-                    </motion.div>
+                  <div className="flex gap-2 text-text-primary">
+                    <span className="text-brand-violet select-none">╰─❯</span>
+                    <span>{item.content}</span>
                   </div>
-                )}
+                </div>
+              )}
 
-                {item.type === 'output' && item.content !== "Welcome to Ahmed's terminal. Type 'help' to see available commands." && (
-                  <div className="mt-2 pl-6 border-l-2 border-white/5 relative">
-                    <div className="absolute -left-[13px] top-0 bg-[#0d0d0d] p-1">
-                      <Sparkles size={14} className="text-brand-violet" />
-                    </div>
-                    <CommandOutput command={item.content} />
+              {item.type === 'output' && item.command === 'welcome' && (
+                <div className="mt-4 text-text-secondary">
+                  <Typewriter text={item.content} />
+                  <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                    {['whoami', 'experience', 'projects', 'skills', 'contact'].map((cmd, i) => (
+                      <span 
+                        key={cmd} 
+                        className="text-brand-violet hover:text-brand-hover hover:underline cursor-pointer transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          executeCommand(cmd);
+                        }}
+                        style={{ animation: `fadeIn 0.5s ease forwards ${i * 0.1 + 1}s`, opacity: 0 }}
+                      >
+                        {cmd}
+                      </span>
+                    ))}
                   </div>
-                )}
-              </motion.div>
-            ))}
-          </AnimatePresence>
+                </div>
+              )}
 
-          {isProcessing && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-3 text-brand-violet">
-              <span>➜</span>
-              <Loader2 size={16} className="animate-spin" />
-            </motion.div>
+              {item.type === 'output' && item.command !== 'welcome' && (
+                <CommandOutput command={item.command!} onCommandClick={executeCommand} />
+              )}
+            </div>
+          ))}
+
+          {/* Active Input Line */}
+          {!isBooting && (
+            <div className={cn(
+              "flex flex-col mt-2 transition-opacity duration-200", 
+              isProcessing ? "opacity-50" : "opacity-100"
+            )}>
+              <div className="flex items-center gap-2 text-text-tertiary select-none text-sm mb-1">
+                <span className="text-brand-violet">╭─</span>
+                <span>{currentDir}</span>
+              </div>
+              <div className="flex items-center gap-2 relative">
+                <span className="text-brand-violet select-none">
+                  {isProcessing ? <BrailleSpinner /> : '╰─❯'}
+                </span>
+                <div className="relative flex-1 flex items-center">
+                  <span className="invisible whitespace-pre font-mono text-[14px]">{input}</span>
+                  {!isProcessing && <span className="absolute left-0 top-0 text-transparent pointer-events-none whitespace-pre font-mono text-[14px]">{input}<span className="cursor-block"></span></span>}
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    disabled={isProcessing}
+                    className="absolute left-0 top-0 w-full bg-transparent border-none outline-none text-text-primary font-mono text-[14px] placeholder:text-text-tertiary/50 terminal-input"
+                    spellCheck="false"
+                    autoComplete="off"
+                    autoFocus
+                  />
+                </div>
+              </div>
+            </div>
           )}
-
-          <div ref={bottomRef} />
+          
+          <div ref={bottomRef} className="h-4" />
         </div>
       </main>
 
-      {/* Input Area */}
-      <footer className="fixed bottom-0 w-full bg-gradient-to-t from-[#0d0d0d] via-[#0d0d0d] to-transparent pt-10 pb-6 px-4 md:px-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="relative flex items-center bg-[#151515] border border-white/10 rounded-lg p-3 shadow-2xl focus-within:border-brand-violet/50 focus-within:shadow-[0_0_20px_rgba(113,112,255,0.15)] transition-all group">
-            <span className="text-brand-violet font-bold mr-3 flex items-center gap-2 select-none">
-              <Command size={16} /> 
-              <span className="hidden sm:inline text-gray-500 font-normal">guest@portfolio ~$</span>
-            </span>
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleCommand}
-              disabled={isProcessing}
-              className="flex-1 bg-transparent border-none outline-none text-white font-mono placeholder:text-gray-600 disabled:opacity-50"
-              placeholder={isProcessing ? "Processing..." : "Type a command..."}
-              autoComplete="off"
-              autoFocus
-              spellCheck="false"
-            />
-            {/* Blinking Cursor block - just for aesthetics when not focused, or to overlay */}
-            <div className={cn(
-              "w-2 h-5 bg-brand-violet/80 ml-1 transition-opacity",
-              input.length === 0 && !isProcessing ? "animate-pulse" : "opacity-0"
-            )} />
-            
-            <div className="absolute right-3 text-[10px] text-gray-600 hidden sm:block">
-              Press Enter ↵
-            </div>
-          </div>
-        </div>
-      </footer>
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(2px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}} />
     </div>
   );
 }

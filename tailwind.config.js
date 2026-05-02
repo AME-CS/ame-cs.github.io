@@ -31,7 +31,7 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'SF Pro Display', '-apple-system', 'system-ui', 'sans-serif'],
-        mono: ['Berkeley Mono', 'ui-monospace', 'SF Mono', 'Menlo', 'monospace'],
+        mono: ['"JetBrains Mono"', 'Berkeley Mono', 'ui-monospace', 'SF Mono', 'Menlo', 'monospace'],
       },
       letterSpacing: {
         display: '-0.022em',
