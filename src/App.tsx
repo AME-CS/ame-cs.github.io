@@ -69,6 +69,32 @@ const BrailleSpinner = () => {
   return <span className="text-claude">{frames[frameIdx]}</span>;
 };
 
+const ThinkingBlock = () => {
+  const verbs = [
+    'Thinking...',
+    'Analyzing context...',
+    'Reading codebase...',
+    'Synthesizing...',
+    'Crafting solutions...',
+    'Writing output...'
+  ];
+  const [verbIdx, setVerbIdx] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVerbIdx((prev) => (prev + 1) % verbs.length);
+    }, 1500);
+    return () => clearInterval(interval);
+  }, [verbs.length]);
+
+  return (
+    <div className="thinking-block tui-fade-in text-zinc-400 flex items-center gap-2">
+      <BrailleSpinner />
+      <span className="text-sm font-medium">{verbs[verbIdx]}</span>
+    </div>
+  );
+};
+
 const TUIBox = ({ children, title }: { children: React.ReactNode; title?: string }) => (
   <div className="my-2">
     {title && (
@@ -246,7 +272,7 @@ export default function App() {
     
     if (trimmedCmd) {
       setIsProcessing(true);
-      await new Promise(r => setTimeout(r, 300 + Math.random() * 400));
+      await new Promise(r => setTimeout(r, 2000 + Math.random() * 3000));
       setHistory(h => [...h, { 
         id: (Date.now() + 1).toString(), 
         type: 'output', 
@@ -324,12 +350,7 @@ export default function App() {
           ))}
 
           {/* Thinking State */}
-          {isProcessing && (
-            <div className="thinking-block tui-fade-in text-zinc-400">
-              <BrailleSpinner />
-              <span className="text-sm font-medium">Claude is thinking...</span>
-            </div>
-          )}
+          {isProcessing && <ThinkingBlock />}
 
           {/* Active Input Line */}
           {!isBooting && !isProcessing && (
