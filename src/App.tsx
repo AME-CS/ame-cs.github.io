@@ -128,13 +128,12 @@ const ToolUse = ({ action }: { action: string }) => (
   </div>
 );
 
-const MetricsFooter = () => {
-  const tokens = (Math.random() * 2 + 1).toFixed(1);
-  const cost = (Math.random() * 0.005 + 0.001).toFixed(4);
-  const duration = (Math.random() * 3 + 1).toFixed(1);
+const MetricsFooter = ({ tokens }: { tokens: number }) => {
+  const cost = (tokens * 0.000015).toFixed(5);
+  const duration = (Math.random() * 0.8 + 0.6).toFixed(1);
   return (
     <div className="text-[11px] text-zinc-600 mt-4 flex gap-3 pt-2">
-      <span>Tokens: {tokens}k</span>
+      <span>Tokens: {tokens}</span>
       <span>Cost: ${cost}</span>
       <span>Duration: {duration}s</span>
     </div>
@@ -156,7 +155,7 @@ const CommandOutput = ({ command, onCommandClick }: { command: string, onCommand
               </React.Fragment>
             ))}
           </div>
-          <MetricsFooter />
+          <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.whoami).length / 4) + 25} />
         </div>
       );
     
@@ -180,7 +179,7 @@ const CommandOutput = ({ command, onCommandClick }: { command: string, onCommand
               </div>
             ))}
           </div>
-          <MetricsFooter />
+          <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.experience).length / 4) + 40} />
         </div>
       );
       
@@ -200,7 +199,7 @@ const CommandOutput = ({ command, onCommandClick }: { command: string, onCommand
               </div>
             ))}
           </div>
-          <MetricsFooter />
+          <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.projects).length / 4) + 30} />
         </div>
       );
 
@@ -217,7 +216,7 @@ const CommandOutput = ({ command, onCommandClick }: { command: string, onCommand
               </div>
             ))}
           </div>
-          <MetricsFooter />
+          <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.skills).length / 4) + 20} />
         </div>
       );
 
@@ -236,7 +235,7 @@ const CommandOutput = ({ command, onCommandClick }: { command: string, onCommand
               </div>
             ))}
           </div>
-          <MetricsFooter />
+          <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.contact).length / 4) + 20} />
         </div>
       );
 
@@ -261,7 +260,7 @@ const CommandOutput = ({ command, onCommandClick }: { command: string, onCommand
               </div>
             ))}
           </div>
-          <MetricsFooter />
+          <MetricsFooter tokens={145} />
         </div>
       );
 
@@ -275,7 +274,7 @@ const CommandOutput = ({ command, onCommandClick }: { command: string, onCommand
           <div className="text-zinc-400 text-sm mt-1">
             I don't recognize the command '{command}'. Type <span className="text-claude cursor-pointer hover:underline" onClick={() => onCommandClick('/help')}>/help</span> to see available commands.
           </div>
-          <MetricsFooter />
+          <MetricsFooter tokens={28} />
         </div>
       );
   }
