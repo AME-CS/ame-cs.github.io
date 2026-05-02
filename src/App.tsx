@@ -722,25 +722,18 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
       const suggestion = getDidYouMean(baseCmd);
       const items: StreamItem[] = [
         { render: (s, d) => <div className="text-red-400 text-sm mt-3 font-semibold">{s ? <TypewriterText text="Error: Command not found" onComplete={d} /> : "Error: Command not found"}</div> },
-        { render: (s, d) => (
-          <div className="text-zinc-400 text-sm mt-1">
-            {s ? <TypewriterText text={`I don't recognize the command '${command}'.`} onComplete={d} /> : `I don't recognize the command '${command}'.`}
-            {suggestion ? (
-              <>
-                {' '}Did you mean <span className="text-claude cursor-pointer hover:underline" onClick={() => onCommandClick(suggestion)}>{suggestion}</span>?
-              </>
-            ) : (
-              <>
-                {' '}Type <span className="text-claude cursor-pointer hover:underline" onClick={() => onCommandClick('/help')}>/help</span> to see available commands.
-              </>
-            )}
-          </div>
-        )}
+        { render: (s, d) => <span className="text-zinc-400 text-sm">{s ? <TypewriterText text={`I don't recognize the command '${command}'.`} onComplete={d} /> : `I don't recognize the command '${command}'.`}</span> },
+        { render: (s, d) => <span className="text-zinc-400 text-sm whitespace-pre">{s ? <TypewriterText text={suggestion ? " Did you mean " : " Type "} onComplete={d} /> : (suggestion ? " Did you mean " : " Type ")}</span> },
+        { render: (s, d) => <span className="text-claude text-sm cursor-pointer hover:underline" onClick={() => onCommandClick(suggestion || '/help')}>{s ? <TypewriterText text={suggestion || '/help'} onComplete={d} /> : (suggestion || '/help')}</span> },
+        { render: (s, d) => <span className="text-zinc-400 text-sm">{s ? <TypewriterText text={suggestion ? "?" : " to see available commands."} onComplete={d} /> : (suggestion ? "?" : " to see available commands.")}</span> }
       ];
       return (
         <div className="my-2 break-words">
           <ToolUse action={`Execute command '${command}'`} />
-          <StreamSequence items={items} stepState={sharedStep} offset={0} />
+          <StreamSequence items={[items[0]]} stepState={sharedStep} offset={0} />
+          <div className="mt-1 leading-relaxed">
+            <StreamSequence items={items.slice(1)} stepState={sharedStep} offset={1} />
+          </div>
           <MetricsFooter tokens={45} />
         </div>
       );
