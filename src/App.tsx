@@ -303,7 +303,7 @@ export default function App() {
       setHistory([{ 
         id: 'b1', 
         type: 'output', 
-        content: "Welcome to Claude Code! Type /help to see available commands.",
+        content: "Welcome to Ahmed Code! Type /help to see available commands.",
         command: 'welcome' 
       }]);
       setIsBooting(false);
