@@ -9,7 +9,7 @@ const PORTFOLIO_DATA = {
     { label: "ROLE", value: "AI Architect & Software Engineer" },
     { label: "FOCUS", value: "Autonomous Agent Orchestration & High-Scale Systems" },
     { label: "CURRENT", value: "Building Next-Gen AI Platform @ Visa" },
-    { label: "LOC", value: "Chicago, IL" }
+    { label: "LOC", value: "Austin, TX" }
   ],
   
   experience: [
