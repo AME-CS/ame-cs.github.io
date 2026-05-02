@@ -177,12 +177,13 @@ const getDidYouMean = (cmd: string) => {
 };
 
 
-const TypewriterText = ({ text, delay = 15 }: { text: string, delay?: number }) => {
+const TypewriterText = ({ text, delay = 15, startDelay = 0 }: { text: string, delay?: number, startDelay?: number }) => {
   const [displayed, setDisplayed] = React.useState('');
 
   React.useEffect(() => {
     let i = 0;
     let req: number;
+    let timeout: ReturnType<typeof setTimeout>;
 
     const animate = () => {
       // Add a fixed number of characters per frame based on delay.
@@ -198,9 +199,19 @@ const TypewriterText = ({ text, delay = 15 }: { text: string, delay?: number }) 
       }
     };
 
-    req = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(req);
-  }, [text, delay]);
+    if (startDelay > 0) {
+      timeout = setTimeout(() => {
+        req = requestAnimationFrame(animate);
+      }, startDelay);
+    } else {
+      req = requestAnimationFrame(animate);
+    }
+
+    return () => {
+      cancelAnimationFrame(req);
+      clearTimeout(timeout);
+    };
+  }, [text, delay, startDelay]);
 
   return <span>{displayed}</span>;
 };
@@ -333,12 +344,12 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
         <div className="my-2 break-words">
           <TaskRunner tools={["List directory ./", "Read file whoami.json"]}>
             {isVerbose && <VerboseLogs />}
-            <div className="mt-3 text-zinc-300 mb-2">Here is your profile data:</div>
+            <div className="mt-3 text-zinc-300 mb-2"><TypewriterText text="Here is your profile data:" /></div>
             <div className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-y-2">
             {PORTFOLIO_DATA.whoami.map((item, i) => (
               <React.Fragment key={i}>
-                <span className="text-zinc-500 font-bold self-center text-sm">{item.label}</span>
-                <span className="text-zinc-200 text-sm">{item.value}</span>
+                <span className="text-zinc-500 font-bold self-center text-sm"><TypewriterText text={item.label} startDelay={400 + i * 150} /></span>
+                <span className="text-zinc-200 text-sm"><TypewriterText text={item.value} startDelay={400 + i * 150 + 50} /></span>
               </React.Fragment>
             ))}
           </div>
@@ -352,17 +363,17 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
         <div className="my-2 break-words">
           <TaskRunner tools={["Read file experience.md", "Grep search 'timeline'", "Formatting timeline markdown..."]}>
           {isVerbose && <VerboseLogs />}
-          <div className="mt-3 text-zinc-300 mb-4">I found the following professional timeline:</div>
+          <div className="mt-3 text-zinc-300 mb-4"><TypewriterText text="I found the following professional timeline:" /></div>
           <div className="space-y-5 border-l-2 border-zinc-800 pl-4">
             {PORTFOLIO_DATA.experience.map((exp, i) => (
               <div key={i} className="flex flex-col">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-zinc-200 font-bold text-sm">{exp.company}</span>
-                  <span className="text-zinc-500 text-sm">· {exp.period}</span>
+                  <span className="text-zinc-200 font-bold text-sm"><TypewriterText text={exp.company} startDelay={500 + i * 400} /></span>
+                  <span className="text-zinc-500 text-sm"><TypewriterText text={`· ${exp.period}`} startDelay={500 + i * 400 + 100} /></span>
                 </div>
-                <div className="text-zinc-300 text-sm mb-1">{exp.role}</div>
+                <div className="text-zinc-300 text-sm mb-1"><TypewriterText text={exp.role} startDelay={500 + i * 400 + 200} /></div>
                 <div className="text-zinc-400 text-sm leading-relaxed">
-                  <TypewriterText text={exp.desc} />
+                  <TypewriterText text={exp.desc} startDelay={500 + i * 400 + 300} />
                 </div>
               </div>
             ))}
@@ -377,15 +388,15 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
         <div className="my-2 break-words">
           <TaskRunner tools={["List directory ./projects", "Read file projects/metadata.json", "Search github repositories...", "Formatting output..."]}>
           {isVerbose && <VerboseLogs />}
-          <div className="mt-3 text-zinc-300 mb-4">Here are the featured builds in your portfolio:</div>
+          <div className="mt-3 text-zinc-300 mb-4"><TypewriterText text="Here are the featured builds in your portfolio:" /></div>
           <div className="space-y-4">
             {PORTFOLIO_DATA.projects.map((p, i) => (
               <div key={i} className="flex flex-col">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-zinc-200 font-bold text-sm">{p.title}</span>
-                  <span className="text-zinc-500 text-xs px-1.5 py-0.5 border border-zinc-700 rounded-md bg-zinc-800/50">{p.tech}</span>
+                  <span className="text-zinc-200 font-bold text-sm"><TypewriterText text={p.title} startDelay={500 + i * 300} /></span>
+                  <span className="text-zinc-500 text-xs px-1.5 py-0.5 border border-zinc-700 rounded-md bg-zinc-800/50"><TypewriterText text={p.tech} startDelay={500 + i * 300 + 100} /></span>
                 </div>
-                <p className="text-zinc-400 text-sm leading-relaxed"><TypewriterText text={p.impact} /></p>
+                <p className="text-zinc-400 text-sm leading-relaxed"><TypewriterText text={p.impact} startDelay={500 + i * 300 + 200} /></p>
               </div>
             ))}
           </div>
@@ -399,12 +410,12 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
         <div className="my-2 break-words">
           <TaskRunner tools={["Read file skills.yml"]}>
           {isVerbose && <VerboseLogs />}
-          <div className="mt-3 text-zinc-300 mb-2">Technical capabilities:</div>
+          <div className="mt-3 text-zinc-300 mb-2"><TypewriterText text="Technical capabilities:" /></div>
           <div className="my-4 space-y-3 border-l-2 border-zinc-800 pl-4">
-            {Object.entries(PORTFOLIO_DATA.skills).map(([cat, skills]) => (
+            {Object.entries(PORTFOLIO_DATA.skills).map(([cat, skills], i) => (
               <div key={cat} className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-x-2">
-                <div className="text-zinc-500 font-bold text-sm">{cat}</div>
-                <div className="text-zinc-300 text-sm">{skills}</div>
+                <div className="text-zinc-500 font-bold text-sm"><TypewriterText text={cat} startDelay={400 + i * 200} /></div>
+                <div className="text-zinc-300 text-sm"><TypewriterText text={skills} startDelay={400 + i * 200 + 100} /></div>
               </div>
             ))}
           </div>
@@ -418,13 +429,13 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
         <div className="my-2 break-words">
           <TaskRunner tools={["Read file contact.json", "Verify external uplinks..."]}>
           {isVerbose && <VerboseLogs />}
-          <div className="mt-3 text-zinc-300 mb-2">Secure communication uplinks:</div>
+          <div className="mt-3 text-zinc-300 mb-2"><TypewriterText text="Secure communication uplinks:" /></div>
           <div className="space-y-2 border-l-2 border-zinc-800 pl-4">
-            {Object.entries(PORTFOLIO_DATA.contact).map(([platform, link]) => (
+            {Object.entries(PORTFOLIO_DATA.contact).map(([platform, link], i) => (
               <div key={platform} className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-x-2">
-                <span className="text-zinc-500 font-bold text-sm">{platform}</span>
+                <span className="text-zinc-500 font-bold text-sm"><TypewriterText text={platform} startDelay={400 + i * 200} /></span>
                 <a href={platform === 'EMAIL' ? `mailto:${link}` : `https://${link}`} target="_blank" rel="noreferrer" className="text-claude hover:underline text-sm transition-colors">
-                  {link}
+                  <TypewriterText text={link} startDelay={400 + i * 200 + 100} />
                 </a>
               </div>
             ))}
@@ -438,7 +449,7 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
     case 'help':
       return (
         <div className="my-4">
-          <div className="text-zinc-300 mb-2 text-sm font-semibold">Available commands:</div>
+          <div className="text-zinc-300 mb-2 text-sm font-semibold"><TypewriterText text="Available commands:" /></div>
           <div className="space-y-1">
             {[
               { c: 'whoami', d: 'View profile information' },
@@ -448,10 +459,10 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
               { c: 'contact', d: 'View contact links' },
               { c: '/clear', d: 'Clear the terminal output' },
               { c: '/help', d: 'Show this help message' }
-            ].map((cmd) => (
+            ].map((cmd, i) => (
               <div key={cmd.c} className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-x-2 hover:bg-zinc-800/30 px-2 py-1 -mx-2 rounded cursor-pointer transition-colors" onClick={() => onCommandClick(cmd.c)}>
-                <span className="text-claude font-bold text-sm">{cmd.c}</span>
-                <span className="text-zinc-400 text-sm">{cmd.d}</span>
+                <span className="text-claude font-bold text-sm"><TypewriterText text={cmd.c} startDelay={300 + i * 150} /></span>
+                <span className="text-zinc-400 text-sm"><TypewriterText text={cmd.d} startDelay={300 + i * 150 + 75} /></span>
               </div>
             ))}
           </div>
