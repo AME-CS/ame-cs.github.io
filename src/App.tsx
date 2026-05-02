@@ -140,6 +140,42 @@ const MetricsFooter = ({ tokens }: { tokens: number }) => {
   );
 };
 
+const VALID_COMMANDS = ['whoami', 'experience', 'projects', 'skills', 'contact', 'help', 'clear'];
+
+const getLevenshteinDistance = (a: string, b: string) => {
+  const matrix = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+  for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
+  for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
+
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      if (a[i - 1] === b[j - 1]) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
+    }
+  }
+  return matrix[a.length][b.length];
+};
+
+const getDidYouMean = (cmd: string) => {
+  let closest = '';
+  let minDistance = Infinity;
+  for (const valid of VALID_COMMANDS) {
+    const dist = getLevenshteinDistance(cmd.toLowerCase().trim(), valid);
+    if (dist < minDistance) {
+      minDistance = dist;
+      closest = valid;
+    }
+  }
+  return minDistance <= 3 ? closest : null;
+};
+
 const CommandOutput = React.memo(({ command, onCommandClick }: { command: string, onCommandClick: (cmd: string) => void }) => {
   switch (command.toLowerCase().trim()) {
     case 'whoami':
@@ -265,6 +301,7 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
       );
 
     default:
+      const suggestion = getDidYouMean(command);
       return (
         <div className="my-2 break-words">
           <ToolUse action={`Execute command '${command}'`} />
@@ -272,9 +309,18 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
             Error: Command not found
           </div>
           <div className="text-zinc-400 text-sm mt-1">
-            I don't recognize the command '{command}'. Type <span className="text-claude cursor-pointer hover:underline" onClick={() => onCommandClick('/help')}>/help</span> to see available commands.
+            I don't recognize the command '{command}'.
+            {suggestion ? (
+              <>
+                {' '}Did you mean <span className="text-claude cursor-pointer hover:underline" onClick={() => onCommandClick(suggestion)}>{suggestion}</span>?
+              </>
+            ) : (
+              <>
+                {' '}Type <span className="text-claude cursor-pointer hover:underline" onClick={() => onCommandClick('/help')}>/help</span> to see available commands.
+              </>
+            )}
           </div>
-          <MetricsFooter tokens={28} />
+          <MetricsFooter tokens={45} />
         </div>
       );
   }
