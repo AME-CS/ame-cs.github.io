@@ -101,11 +101,11 @@ const ThinkingBlock = () => {
         return next;
       });
 
-      const randomDelay = Math.floor(Math.random() * 300) + 200; // 200ms to 500ms
+      const randomDelay = Math.floor(Math.random() * 200) + 150; // 150ms to 350ms
       timeoutId = setTimeout(cycleVerb, randomDelay);
     };
 
-    const initialDelay = Math.floor(Math.random() * 300) + 200;
+    const initialDelay = Math.floor(Math.random() * 200) + 150;
     timeoutId = setTimeout(cycleVerb, initialDelay);
 
     return () => clearTimeout(timeoutId);
@@ -140,14 +140,14 @@ const MetricsFooter = ({ tokens }: { tokens: number }) => {
   );
 };
 
-const CommandOutput = ({ command, onCommandClick }: { command: string, onCommandClick: (cmd: string) => void }) => {
+const CommandOutput = React.memo(({ command, onCommandClick }: { command: string, onCommandClick: (cmd: string) => void }) => {
   switch (command.toLowerCase().trim()) {
     case 'whoami':
       return (
-        <div className="my-2">
+        <div className="my-2 break-words">
           <ToolUse action="Read file whoami.json" />
           <div className="mt-3 text-zinc-300 mb-2">Here is your profile data:</div>
-          <div className="grid grid-cols-[120px_1fr] gap-y-2">
+          <div className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-y-2">
             {PORTFOLIO_DATA.whoami.map((item, i) => (
               <React.Fragment key={i}>
                 <span className="text-zinc-500 font-bold self-center text-sm">{item.label}</span>
@@ -161,7 +161,7 @@ const CommandOutput = ({ command, onCommandClick }: { command: string, onCommand
     
     case 'experience':
       return (
-        <div className="my-2">
+        <div className="my-2 break-words">
           <ToolUse action="Read file experience.md" />
           <ToolUse action="Grep search 'timeline'" />
           <div className="mt-3 text-zinc-300 mb-4">I found the following professional timeline:</div>
@@ -185,7 +185,7 @@ const CommandOutput = ({ command, onCommandClick }: { command: string, onCommand
       
     case 'projects':
       return (
-        <div className="my-2">
+        <div className="my-2 break-words">
           <ToolUse action="List directory ./projects" />
           <div className="mt-3 text-zinc-300 mb-4">Here are the featured builds in your portfolio:</div>
           <div className="space-y-4">
@@ -205,12 +205,12 @@ const CommandOutput = ({ command, onCommandClick }: { command: string, onCommand
 
     case 'skills':
       return (
-        <div className="my-2">
+        <div className="my-2 break-words">
           <ToolUse action="Read file skills.yml" />
           <div className="mt-3 text-zinc-300 mb-2">Technical capabilities:</div>
           <div className="my-4 space-y-3 border-l-2 border-zinc-800 pl-4">
             {Object.entries(PORTFOLIO_DATA.skills).map(([cat, skills]) => (
-              <div key={cat} className="grid grid-cols-[120px_1fr]">
+              <div key={cat} className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-x-2">
                 <div className="text-zinc-500 font-bold text-sm">{cat}</div>
                 <div className="text-zinc-300 text-sm">{skills}</div>
               </div>
@@ -222,12 +222,12 @@ const CommandOutput = ({ command, onCommandClick }: { command: string, onCommand
 
     case 'contact':
       return (
-        <div className="my-2">
+        <div className="my-2 break-words">
           <ToolUse action="Read file contact.json" />
           <div className="mt-3 text-zinc-300 mb-2">Secure communication uplinks:</div>
           <div className="space-y-2 border-l-2 border-zinc-800 pl-4">
             {Object.entries(PORTFOLIO_DATA.contact).map(([platform, link]) => (
-              <div key={platform} className="grid grid-cols-[120px_1fr]">
+              <div key={platform} className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-x-2">
                 <span className="text-zinc-500 font-bold text-sm">{platform}</span>
                 <a href={platform === 'EMAIL' ? `mailto:${link}` : `https://${link}`} target="_blank" rel="noreferrer" className="text-claude hover:underline text-sm transition-colors">
                   {link}
@@ -254,7 +254,7 @@ const CommandOutput = ({ command, onCommandClick }: { command: string, onCommand
               { c: '/clear', d: 'Clear the terminal output' },
               { c: '/help', d: 'Show this help message' }
             ].map((cmd) => (
-              <div key={cmd.c} className="grid grid-cols-[120px_1fr] hover:bg-zinc-800/30 px-2 py-1 -mx-2 rounded cursor-pointer transition-colors" onClick={() => onCommandClick(cmd.c)}>
+              <div key={cmd.c} className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-x-2 hover:bg-zinc-800/30 px-2 py-1 -mx-2 rounded cursor-pointer transition-colors" onClick={() => onCommandClick(cmd.c)}>
                 <span className="text-claude font-bold text-sm">{cmd.c}</span>
                 <span className="text-zinc-400 text-sm">{cmd.d}</span>
               </div>
@@ -266,7 +266,7 @@ const CommandOutput = ({ command, onCommandClick }: { command: string, onCommand
 
     default:
       return (
-        <div className="my-2">
+        <div className="my-2 break-words">
           <ToolUse action={`Execute command '${command}'`} />
           <div className="text-red-400 text-sm mt-3 font-semibold">
             Error: Command not found
@@ -278,7 +278,7 @@ const CommandOutput = ({ command, onCommandClick }: { command: string, onCommand
         </div>
       );
   }
-};
+});
 
 type HistoryItem = {
   id: string;
@@ -332,7 +332,7 @@ export default function App() {
     
     if (trimmedCmd) {
       setIsProcessing(true);
-      await new Promise(r => setTimeout(r, 600 + Math.random() * 800)); // 0.6s to 1.4s delay
+      await new Promise(r => setTimeout(r, 300 + Math.random() * 400)); // 0.3s to 0.7s delay
       setHistory(h => [...h, { 
         id: (Date.now() + 1).toString(), 
         type: 'output', 
