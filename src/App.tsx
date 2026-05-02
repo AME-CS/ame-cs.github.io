@@ -74,20 +74,22 @@ const ASCII_BANNER = `
 const StartupBanner = () => {
   return (
     <div className="mb-6 select-none">
-      <pre className="text-claude text-[10px] sm:text-xs leading-[1.1] font-bold whitespace-pre" aria-label="AME Code ASCII Banner">
-        {ASCII_BANNER}
-      </pre>
-      <div className="mt-3 space-y-1 text-[12px] sm:text-[13px]">
+      <div className="overflow-x-auto -mx-2 px-2">
+        <pre className="text-claude text-[9px] sm:text-[10px] md:text-xs leading-[1.1] font-bold whitespace-pre" aria-label="AME Code ASCII Banner">
+          {ASCII_BANNER}
+        </pre>
+      </div>
+      <div className="mt-3 space-y-1 text-[11px] sm:text-[12px] md:text-[13px]">
         <div className="flex items-center gap-2">
           <span className="text-zinc-500">v2.0.26</span>
           <span className="text-zinc-700">│</span>
           <span className="text-zinc-500">model:</span>
           <span className="text-zinc-300">claude-sonnet-4-20250514</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-zinc-500">cwd:</span>
           <span className="text-zinc-400">~/portfolio</span>
-          <span className="text-zinc-700">│</span>
+          <span className="text-zinc-700 hidden sm:inline">│</span>
           <span className="text-zinc-600 italic">Type</span>
           <span className="text-claude font-semibold">/help</span>
           <span className="text-zinc-600 italic">to see available commands</span>
@@ -605,7 +607,30 @@ export default function App() {
   const mainRef = useRef<HTMLElement>(null);
 
   const scrollToBottom = React.useCallback(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    const main = mainRef.current;
+    if (main) {
+      // Use rAF to ensure DOM has been painted before scrolling
+      requestAnimationFrame(() => {
+        main.scrollTop = main.scrollHeight;
+      });
+    }
+  }, []);
+
+  // MutationObserver to auto-scroll when new content is added (streaming, tool use, etc.)
+  useEffect(() => {
+    const main = mainRef.current;
+    if (!main) return;
+
+    const observer = new MutationObserver(() => {
+      // Only auto-scroll if user is near the bottom (within 200px)
+      const isNearBottom = main.scrollHeight - main.scrollTop - main.clientHeight < 200;
+      if (isNearBottom) {
+        main.scrollTop = main.scrollHeight;
+      }
+    });
+
+    observer.observe(main, { childList: true, subtree: true, characterData: true });
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -635,7 +660,11 @@ export default function App() {
   useEffect(() => {
     scrollToBottom();
     if (!isProcessing && !isBooting) {
-      inputRef.current?.focus();
+      // Small delay to let render settle before focusing
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+        scrollToBottom();
+      });
     }
   }, [history, isProcessing, isBooting, scrollToBottom]);
 
@@ -711,11 +740,12 @@ export default function App() {
 
   return (
     <ScrollContext.Provider value={scrollToBottom}>
-    <div className="h-[100dvh] tui-bg text-zinc-100 font-mono text-[14px] selection:bg-claude/30 flex flex-col cursor-default">
+    <div className="h-[100dvh] tui-bg text-zinc-100 font-mono text-[13px] sm:text-[14px] selection:bg-claude/30 flex flex-col cursor-default"
+         onClick={() => { if (!isTerminated) inputRef.current?.focus(); }}>
 
       {/* Terminal Main Content */}
-      <main ref={mainRef} className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar">
-        <div className="w-full pb-40">
+      <main ref={mainRef} className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6 custom-scrollbar">
+        <div className="w-full pb-16">
           {history.map((item) => (
             <div key={item.id} className="tui-fade-in">
               {item.type === 'system' && (
@@ -749,7 +779,7 @@ export default function App() {
 
           {/* Active Input Line */}
           {!isBooting && !isProcessing && (
-            <div className="flex flex-col mt-8 transition-opacity duration-200">
+            <div className="flex flex-col mt-6 transition-opacity duration-200">
               <div className="flex items-center gap-2 relative">
                 <span className="text-claude text-sm font-bold leading-none">❯</span>
                 <div className="relative flex-1 flex items-center">
@@ -773,16 +803,17 @@ export default function App() {
             </div>
           )}
           
-          <div ref={bottomRef} className="h-4" />
+          <div ref={bottomRef} className="h-12 sm:h-8" />
         </div>
       </main>
 
       {/* Sticky Status Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 p-2 px-4 text-[11px] text-zinc-500 flex justify-between z-50">
+      <div className="shrink-0 bg-zinc-900 border-t border-zinc-800 p-2 px-4 text-[10px] sm:text-[11px] text-zinc-500 flex justify-between z-50">
         <div>AME Code v2.0.26</div>
-        <div className="flex gap-4">
+        <div className="flex gap-3 sm:gap-4">
           <span>Context: {sessionTokens} tokens</span>
-          <span>Session Cost: ${(sessionTokens * 0.000015).toFixed(5)}</span>
+          <span className="hidden sm:inline">Session Cost: ${(sessionTokens * 0.000015).toFixed(5)}</span>
+          <span className="sm:hidden">${(sessionTokens * 0.000015).toFixed(4)}</span>
         </div>
       </div>
     </div>
