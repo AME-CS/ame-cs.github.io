@@ -578,25 +578,38 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
         { label: 'Editor', value: 'Neovim / VS Code' },
         { label: 'Theme', value: 'AME Dark [#d97757]' },
       ];
+
+      const items: StreamItem[] = [
+        { render: (s, d) => <div className="text-zinc-200 font-bold">{s ? <TypewriterText text="ahmed@portfolio" onComplete={d} /> : "ahmed@portfolio"}</div> },
+        { render: (s, d) => <div className="text-zinc-700">{s ? <TypewriterText text={'─'.repeat(20)} onComplete={d} /> : '─'.repeat(20)}</div> },
+        ...sysInfo.map((info) => ({
+          render: (s: boolean, d: () => void) => (
+            <div className="flex gap-2">
+              <span className="text-claude font-bold shrink-0">{info.label}</span>
+              <span className="text-zinc-400 break-all">{s ? <TypewriterText text={info.value} onComplete={d} /> : info.value}</span>
+            </div>
+          )
+        })),
+        { render: (s, d) => {
+            if (s) { setTimeout(d, 50); return null; }
+            return (
+              <div className="flex gap-1 mt-2 tui-fade-in">
+                {['#d97757','#18181b','#27272a','#a1a1aa','#f4f4f5','#22c55e','#ef4444','#3b82f6'].map((c,i) => (
+                  <span key={i} className="w-4 h-4 rounded-sm inline-block" style={{ backgroundColor: c }} />
+                ))}
+              </div>
+            );
+          }
+        }
+      ];
+
       return (
         <div className="my-2 break-words">
           <TaskRunner tools={["Gathering system information...", "Reading hardware specs..."]}>
             <div className="flex flex-col sm:flex-row gap-4 mt-3">
-              <pre className="text-claude text-[10px] sm:text-xs leading-[1.2] font-bold whitespace-pre shrink-0">{NEOFETCH_LOGO}</pre>
+              <pre className="text-claude text-[10px] sm:text-xs leading-[1.2] font-bold whitespace-pre shrink-0 tui-fade-in">{NEOFETCH_LOGO}</pre>
               <div className="space-y-0.5 text-sm min-w-0">
-                <div className="text-zinc-200 font-bold">ahmed@portfolio</div>
-                <div className="text-zinc-700">{'─'.repeat(20)}</div>
-                {sysInfo.map((s, i) => (
-                  <div key={i} className="flex gap-2">
-                    <span className="text-claude font-bold shrink-0">{s.label}</span>
-                    <span className="text-zinc-400 break-all">{s.value}</span>
-                  </div>
-                ))}
-                <div className="flex gap-1 mt-2">
-                  {['#d97757','#18181b','#27272a','#a1a1aa','#f4f4f5','#22c55e','#ef4444','#3b82f6'].map((c,i) => (
-                    <span key={i} className="w-4 h-4 rounded-sm inline-block" style={{ backgroundColor: c }} />
-                  ))}
-                </div>
+                <StreamSequence items={items} stepState={sharedStep} offset={0} />
               </div>
             </div>
             <MetricsFooter tokens={180} />
@@ -606,21 +619,26 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
     }
 
     case 'resume': {
+      const items: StreamItem[] = [
+        { render: (s, d) => <div className="mb-2">{s ? <TypewriterText text="Resume compiled successfully." onComplete={d} /> : "Resume compiled successfully."}</div> },
+        { render: (s, d) => (
+          <a
+            href="/resume.pdf"
+            download="Ahmed_Eid_Resume.pdf"
+            className="inline-flex items-center gap-2 text-claude hover:underline font-semibold transition-colors"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span>📄</span>
+            <span>{s ? <TypewriterText text="Download Ahmed_Eid_Resume.pdf" onComplete={d} /> : "Download Ahmed_Eid_Resume.pdf"}</span>
+          </a>
+        )},
+        { render: (s, d) => <div className="text-zinc-600 text-xs mt-2">{s ? <TypewriterText text="1 page · LaTeX compiled · PDF" onComplete={d} /> : "1 page · LaTeX compiled · PDF"}</div> }
+      ];
       return (
         <div className="my-2 break-words">
           <TaskRunner tools={["Locating resume source...", "Compiling LaTeX...", "Generating PDF..."]}>
-            <div className="mt-3 text-zinc-300 text-sm">
-              <div className="mb-2">Resume compiled successfully.</div>
-              <a
-                href="/resume.pdf"
-                download="Ahmed_Eid_Resume.pdf"
-                className="inline-flex items-center gap-2 text-claude hover:underline font-semibold transition-colors"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <span>📄</span>
-                <span>Download Ahmed_Eid_Resume.pdf</span>
-              </a>
-              <div className="text-zinc-600 text-xs mt-2">1 page · LaTeX compiled · PDF</div>
+            <div className="mt-3 text-zinc-300 text-sm flex flex-col items-start">
+              <StreamSequence items={items} stepState={sharedStep} offset={0} />
             </div>
             <MetricsFooter tokens={60} />
           </TaskRunner>
@@ -643,20 +661,24 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
     }
 
     case 'history': {
+      const items: StreamItem[] = commandHistory.length === 0 
+        ? [{ render: (s, d) => <div className="text-zinc-500 text-sm">{s ? <TypewriterText text="No commands in history." onComplete={d} /> : "No commands in history."}</div> }]
+        : commandHistory.map((cmd, i) => ({
+            render: (s, d) => (
+              <div className="flex gap-3 text-sm">
+                <span className="text-zinc-600 w-6 text-right shrink-0">{i + 1}</span>
+                <span className="text-zinc-300 cursor-pointer hover:text-claude transition-colors" onClick={() => onCommandClick(cmd)}>
+                  {s ? <TypewriterText text={cmd} onComplete={d} /> : cmd}
+                </span>
+              </div>
+            )
+          }));
+
       return (
         <div className="my-2 break-words">
           <ToolUse action="Read session history" />
           <div className="mt-3 space-y-0.5">
-            {commandHistory.length === 0 ? (
-              <div className="text-zinc-500 text-sm">No commands in history.</div>
-            ) : (
-              commandHistory.map((cmd, i) => (
-                <div key={i} className="flex gap-3 text-sm">
-                  <span className="text-zinc-600 w-6 text-right shrink-0">{i + 1}</span>
-                  <span className="text-zinc-300 cursor-pointer hover:text-claude transition-colors" onClick={() => onCommandClick(cmd)}>{cmd}</span>
-                </div>
-              ))
-            )}
+            <StreamSequence items={items} stepState={sharedStep} offset={0} />
           </div>
           <MetricsFooter tokens={Math.max(30, commandHistory.length * 5)} />
         </div>
@@ -696,16 +718,13 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
       );
     }
 
-    default:
+    default: {
       const suggestion = getDidYouMean(baseCmd);
-      return (
-        <div className="my-2 break-words">
-          <ToolUse action={`Execute command '${command}'`} />
-          <div className="text-red-400 text-sm mt-3 font-semibold">
-            Error: Command not found
-          </div>
+      const items: StreamItem[] = [
+        { render: (s, d) => <div className="text-red-400 text-sm mt-3 font-semibold">{s ? <TypewriterText text="Error: Command not found" onComplete={d} /> : "Error: Command not found"}</div> },
+        { render: (s, d) => (
           <div className="text-zinc-400 text-sm mt-1">
-            I don't recognize the command '{command}'.
+            {s ? <TypewriterText text={`I don't recognize the command '${command}'.`} onComplete={d} /> : `I don't recognize the command '${command}'.`}
             {suggestion ? (
               <>
                 {' '}Did you mean <span className="text-claude cursor-pointer hover:underline" onClick={() => onCommandClick(suggestion)}>{suggestion}</span>?
@@ -716,9 +735,16 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
               </>
             )}
           </div>
+        )}
+      ];
+      return (
+        <div className="my-2 break-words">
+          <ToolUse action={`Execute command '${command}'`} />
+          <StreamSequence items={items} stepState={sharedStep} offset={0} />
           <MetricsFooter tokens={45} />
         </div>
       );
+    }
   }
 });
 
