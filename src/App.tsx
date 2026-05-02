@@ -177,11 +177,101 @@ const getDidYouMean = (cmd: string) => {
 };
 
 const CommandOutput = React.memo(({ command, onCommandClick }: { command: string, onCommandClick: (cmd: string) => void }) => {
-  switch (command.toLowerCase().trim()) {
+  const normalizedCmd = command.toLowerCase().trim();
+  const args = normalizedCmd.split(' ').filter(Boolean);
+  const baseCmd = args[0] || '';
+  const isVerbose = args.includes('--verbose') || args.includes('--thought');
+
+  const VerboseLogs = () => (
+    <div className="text-xs text-zinc-500 font-mono mb-4 space-y-1 opacity-70">
+      <div>[SYS] Connecting to identity matrix...</div>
+      <div>[SYS] Bypassing neural firewalls... [OK]</div>
+      <div>[SYS] Extracting unstructured payload...</div>
+      <div>[SYS] Formatting to human-readable presentation...</div>
+    </div>
+  );
+
+  if (baseCmd === 'sudo') {
+    return (
+      <div className="my-2 break-words">
+        <ToolUse action={`Attempting elevated privileges`} />
+        {isVerbose && <VerboseLogs />}
+        <div className="text-red-400 text-sm mt-3 font-semibold">Ahmed is not in the sudoers file. This incident will be reported.</div>
+        <MetricsFooter tokens={15} />
+      </div>
+    );
+  }
+
+  if (baseCmd === 'rm') {
+    return (
+      <div className="my-2 break-words">
+        <ToolUse action={`Execute command '${command}'`} />
+        {isVerbose && <VerboseLogs />}
+        <div className="text-red-400 text-sm mt-3 font-semibold">Access Denied: Nice try. I'm an AI, but I'm not that naive.</div>
+        <MetricsFooter tokens={12} />
+      </div>
+    );
+  }
+
+  if (baseCmd === 'ls') {
+    return (
+      <div className="my-2 break-words">
+        <ToolUse action="List current directory" />
+        {isVerbose && <VerboseLogs />}
+        <div className="mt-3 text-zinc-300 text-sm font-medium flex gap-4">
+          <span className="text-claude">projects/</span>
+          <span>whoami.json</span>
+          <span>experience.md</span>
+          <span>skills.yml</span>
+          <span>contact.json</span>
+        </div>
+        <MetricsFooter tokens={30} />
+      </div>
+    );
+  }
+
+  if (baseCmd === 'cat') {
+    const file = args[1];
+    if (file === 'whoami.json') {
+      return (
+        <div className="my-2 break-words">
+          <ToolUse action="Read file whoami.json" />
+          {isVerbose && <VerboseLogs />}
+          <pre className="mt-3 text-zinc-400 text-xs overflow-x-auto p-2 bg-zinc-900 rounded">
+            {JSON.stringify(PORTFOLIO_DATA.whoami, null, 2)}
+          </pre>
+          <MetricsFooter tokens={100} />
+        </div>
+      );
+    } else if (file === 'contact.json') {
+      return (
+        <div className="my-2 break-words">
+          <ToolUse action="Read file contact.json" />
+          {isVerbose && <VerboseLogs />}
+          <pre className="mt-3 text-zinc-400 text-xs overflow-x-auto p-2 bg-zinc-900 rounded">
+            {JSON.stringify(PORTFOLIO_DATA.contact, null, 2)}
+          </pre>
+          <MetricsFooter tokens={50} />
+        </div>
+      );
+    } else {
+      return (
+        <div className="my-2 break-words">
+          <ToolUse action={`Read file ${file}`} />
+          {isVerbose && <VerboseLogs />}
+          <div className="text-red-400 text-sm mt-3">cat: {file}: No such file or directory</div>
+          <MetricsFooter tokens={10} />
+        </div>
+      );
+    }
+  }
+
+  switch (baseCmd) {
     case 'whoami':
       return (
         <div className="my-2 break-words">
           <ToolUse action="Read file whoami.json" />
+          {isVerbose && <VerboseLogs />}
           <div className="mt-3 text-zinc-300 mb-2">Here is your profile data:</div>
           <div className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-y-2">
             {PORTFOLIO_DATA.whoami.map((item, i) => (
@@ -200,6 +290,7 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
         <div className="my-2 break-words">
           <ToolUse action="Read file experience.md" />
           <ToolUse action="Grep search 'timeline'" />
+          {isVerbose && <VerboseLogs />}
           <div className="mt-3 text-zinc-300 mb-4">I found the following professional timeline:</div>
           <div className="space-y-5 border-l-2 border-zinc-800 pl-4">
             {PORTFOLIO_DATA.experience.map((exp, i) => (
@@ -223,6 +314,7 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
       return (
         <div className="my-2 break-words">
           <ToolUse action="List directory ./projects" />
+          {isVerbose && <VerboseLogs />}
           <div className="mt-3 text-zinc-300 mb-4">Here are the featured builds in your portfolio:</div>
           <div className="space-y-4">
             {PORTFOLIO_DATA.projects.map((p, i) => (
@@ -243,6 +335,7 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
       return (
         <div className="my-2 break-words">
           <ToolUse action="Read file skills.yml" />
+          {isVerbose && <VerboseLogs />}
           <div className="mt-3 text-zinc-300 mb-2">Technical capabilities:</div>
           <div className="my-4 space-y-3 border-l-2 border-zinc-800 pl-4">
             {Object.entries(PORTFOLIO_DATA.skills).map(([cat, skills]) => (
@@ -260,6 +353,7 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
       return (
         <div className="my-2 break-words">
           <ToolUse action="Read file contact.json" />
+          {isVerbose && <VerboseLogs />}
           <div className="mt-3 text-zinc-300 mb-2">Secure communication uplinks:</div>
           <div className="space-y-2 border-l-2 border-zinc-800 pl-4">
             {Object.entries(PORTFOLIO_DATA.contact).map(([platform, link]) => (
@@ -301,7 +395,7 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
       );
 
     default:
-      const suggestion = getDidYouMean(command);
+      const suggestion = getDidYouMean(baseCmd);
       return (
         <div className="my-2 break-words">
           <ToolUse action={`Execute command '${command}'`} />
@@ -337,6 +431,7 @@ export default function App() {
   const [input, setInput] = useState('');
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isBooting, setIsBooting] = useState(true);
   
@@ -357,6 +452,17 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const handleGlobalKeyDown = (e: globalThis.KeyboardEvent) => {
+      if ((e.metaKey && e.key === 'k') || (e.ctrlKey && e.key === 'l')) {
+        e.preventDefault();
+        setHistory([]);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     if (!isProcessing && !isBooting) {
       inputRef.current?.focus();
@@ -373,10 +479,9 @@ export default function App() {
       setHistory([]);
       return;
     }
-
-    setHistory(h => [...h, { id: Date.now().toString(), type: 'input', content: trimmedCmd }]);
-    
     if (trimmedCmd) {
+      setCommandHistory(prev => [...prev, trimmedCmd]);
+      setHistory(h => [...h, { id: Date.now().toString(), type: 'input', content: trimmedCmd }]);
       setIsProcessing(true);
       await new Promise(r => setTimeout(r, 300 + Math.random() * 400)); // 0.3s to 0.7s delay
       setHistory(h => [...h, { 
@@ -394,20 +499,18 @@ export default function App() {
       executeCommand(input);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      const inputHistory = history.filter(h => h.type === 'input');
-      if (inputHistory.length > 0) {
-        const newIndex = Math.min(historyIndex + 1, inputHistory.length - 1);
+      if (commandHistory.length > 0) {
+        const newIndex = Math.min(historyIndex + 1, commandHistory.length - 1);
         setHistoryIndex(newIndex);
-        setInput(inputHistory[inputHistory.length - 1 - newIndex].content);
+        setInput(commandHistory[commandHistory.length - 1 - newIndex]);
       }
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
-      const inputHistory = history.filter(h => h.type === 'input');
       if (historyIndex > 0) {
         const newIndex = historyIndex - 1;
         setHistoryIndex(newIndex);
-        setInput(inputHistory[inputHistory.length - 1 - newIndex].content);
-      } else {
+        setInput(commandHistory[commandHistory.length - 1 - newIndex]);
+      } else if (historyIndex === 0) {
         setHistoryIndex(-1);
         setInput('');
       }
