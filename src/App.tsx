@@ -183,10 +183,13 @@ const TypewriterText = ({ text, delay = 5 }: { text: string, delay?: number }) =
   React.useEffect(() => {
     let current = '';
     let i = 0;
-    let lastTime = performance.now();
+    let lastTime: number | null = null;
     let req: number;
 
     const animate = (time: number) => {
+      if (lastTime === null) {
+        lastTime = time;
+      }
       const charsToAdd = Math.floor((time - lastTime) / delay);
       if (charsToAdd > 0) {
         current += text.substring(i, i + charsToAdd);
