@@ -101,11 +101,11 @@ const ThinkingBlock = () => {
         return next;
       });
 
-      const randomDelay = Math.floor(Math.random() * 1800) + 700; // 700ms to 2500ms
+      const randomDelay = Math.floor(Math.random() * 300) + 200; // 200ms to 500ms
       timeoutId = setTimeout(cycleVerb, randomDelay);
     };
 
-    const initialDelay = Math.floor(Math.random() * 1800) + 700;
+    const initialDelay = Math.floor(Math.random() * 300) + 200;
     timeoutId = setTimeout(cycleVerb, initialDelay);
 
     return () => clearTimeout(timeoutId);
@@ -333,7 +333,7 @@ export default function App() {
     
     if (trimmedCmd) {
       setIsProcessing(true);
-      await new Promise(r => setTimeout(r, 2000 + Math.random() * 3000));
+      await new Promise(r => setTimeout(r, 600 + Math.random() * 800)); // 0.6s to 1.4s delay
       setHistory(h => [...h, { 
         id: (Date.now() + 1).toString(), 
         type: 'output', 
