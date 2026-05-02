@@ -2,16 +2,16 @@
 @config "../tailwind.config.js";
 
 :root {
-  background-color: #0b0b0c;
-  color: #f7f8f8;
+  background-color: #18181b;
+  color: #f4f4f5;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #0b0b0c;
-  color: #f7f8f8;
+  background-color: #18181b;
+  color: #f4f4f5;
   overflow: hidden;
   font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
@@ -25,15 +25,15 @@ input:focus { outline: none; }
 /* Claude Code TUI Elements */
 
 .tui-bg {
-  background-color: #0b0b0c;
+  background-color: #18181b;
 }
 
 .text-claude {
-  color: #9b6dff;
+  color: #d97757;
 }
 
 .border-tui {
-  border-color: #2a2a2b;
+  border-color: #27272a;
 }
 
 .bg-tui-header {
@@ -44,7 +44,7 @@ input:focus { outline: none; }
   display: inline-block;
   width: 8px;
   height: 16px;
-  background-color: #9b6dff;
+  background-color: #d97757;
   vertical-align: middle;
   margin-left: 2px;
   animation: blink 1s step-end infinite;
@@ -56,9 +56,7 @@ input:focus { outline: none; }
 }
 
 .thinking-block {
-  border: 1px solid #2a2a2b;
-  background-color: #121213;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0;
   margin: 0.5rem 0;
   display: inline-flex;
   align-items: center;
