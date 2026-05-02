@@ -84,7 +84,7 @@ const StartupBanner = () => {
           <span className="text-zinc-500">v2.0.26</span>
           <span className="text-zinc-700">│</span>
           <span className="text-zinc-500">model:</span>
-          <span className="text-zinc-300">ame-opus-1.0</span>
+          <span className="text-zinc-300">ame-cortex-1.0</span>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-zinc-500">cwd:</span>
