@@ -2,69 +2,133 @@
 @config "../tailwind.config.js";
 
 :root {
-  background-color: #08090a;
+  background-color: #050506;
   color: #f7f8f8;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #08090a;
+  background-color: #050506;
   color: #f7f8f8;
+  overflow: hidden;
 }
 
-/* Custom scrollbar for the terminal feel */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(113, 112, 255, 0.5); /* brand-violet */
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(113, 112, 255, 0.2); border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: rgba(113, 112, 255, 0.5); }
+
+input:focus { outline: none; }
+
+/* CRT Distortion Layer */
+.crt-distortion::before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.05), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.05));
+  z-index: 1000;
+  background-size: 100% 2px, 3px 100%;
+  pointer-events: none;
+  opacity: 0.6;
 }
 
-/* Remove default focus outlines for a cleaner CLI look */
-input:focus {
-  outline: none;
+/* Moving Scanline Overlay */
+.scanline-move {
+  width: 100%;
+  height: 100px;
+  z-index: 1001;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(255, 255, 255, 0.03) 50%, rgba(0, 0, 0, 0) 100%);
+  position: absolute;
+  bottom: 100%;
+  animation: scanline 8s linear infinite;
+  pointer-events: none;
+}
+@keyframes scanline {
+  0% { bottom: 100%; }
+  100% { bottom: -100px; }
 }
 
-/* CRT Glow and Text Shadow */
-.crt-glow {
-  text-shadow: 0 0 4px rgba(113, 112, 255, 0.3);
+/* Ambient Deep Glow */
+.ambient-bg {
+  background: 
+    radial-gradient(circle at 50% -20%, rgba(113, 112, 255, 0.12) 0%, transparent 60%),
+    radial-gradient(circle at 0% 100%, rgba(113, 112, 255, 0.04) 0%, transparent 40%),
+    #050506;
 }
 
-/* Block Cursor */
-.terminal-input {
-  caret-color: transparent;
-  position: relative;
-}
+/* CRT Glow and Neon */
+.crt-glow { text-shadow: 0 0 5px rgba(113, 112, 255, 0.5); }
+.text-neon { text-shadow: 0 0 8px rgba(113, 112, 255, 0.6), 0 0 20px rgba(113, 112, 255, 0.2); }
+.text-neon-white { text-shadow: 0 0 8px rgba(255, 255, 255, 0.3); }
 
+/* Block Cursor with Pulse */
 .cursor-block {
   display: inline-block;
-  width: 9px;
-  height: 18px;
+  width: 8px;
+  height: 1.1em;
   background-color: #7170ff;
-  animation: blink 1s step-end infinite;
-  vertical-align: text-bottom;
-  margin-left: 2px;
+  box-shadow: 0 0 10px #7170ff;
+  animation: blink 0.8s step-end infinite;
+  vertical-align: middle;
 }
-
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  0%, 100% { opacity: 1; transform: scaleX(1); }
+  50% { opacity: 0; transform: scaleX(0.8); }
 }
 
-/* Ambient glow for the background */
-.ambient-bg {
-  background: radial-gradient(circle at 50% 0%, rgba(113,112,255,0.05) 0%, rgba(8,9,10,1) 60%);
+/* Output Containers */
+.command-output-container {
+  border-left: 1px solid rgba(113, 112, 255, 0.2);
+  padding-left: 1.5rem;
+  margin: 1.25rem 0;
+  position: relative;
+  background: linear-gradient(90deg, rgba(113, 112, 255, 0.02) 0%, transparent 100%);
+}
+.command-output-container::after {
+  content: "";
+  position: absolute;
+  top: 0; left: -1px;
+  height: 100%;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, #7170ff, transparent);
+  box-shadow: 0 0 8px #7170ff;
+}
+
+/* Entrance Animations */
+.entry-animation {
+  animation: entryFade 0.4s ease-out forwards;
+  opacity: 0;
+  transform: translateX(-8px);
+}
+@keyframes entryFade {
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Vignette */
+.vignette {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at center, transparent 50%, rgba(0,0,0,0.5) 100%);
+  pointer-events: none;
+  z-index: 1002;
+}
+
+/* Matrix Noise */
+.noise {
+  position: fixed;
+  top: -50%; left: -50%; width: 200%; height: 200%;
+  background: transparent url('http://assets.iceable.com/img/noise-transparent.png') repeat 0 0;
+  animation: noise 0.2s infinite;
+  opacity: .04;
+  z-index: 1003;
+  pointer-events: none;
+}
+@keyframes noise {
+  0% { transform: translate(0,0); }
+  10% { transform: translate(-5%,-5%); }
+  50% { transform: translate(5%,5%); }
+  100% { transform: translate(0,0); }
 }
