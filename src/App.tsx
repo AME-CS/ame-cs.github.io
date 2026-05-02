@@ -177,14 +177,14 @@ const getDidYouMean = (cmd: string) => {
 };
 
 
-const TypewriterText = ({ text, delay = 5 }: { text: string, delay?: number }) => {
+const TypewriterText = ({ text, delay = 20 }: { text: string, delay?: number }) => {
   const [displayed, setDisplayed] = React.useState('');
   React.useEffect(() => {
     let i = 0;
     const interval = setInterval(() => {
+      i += 1;
       setDisplayed(text.substring(0, i));
-      i++;
-      if (i > text.length) clearInterval(interval);
+      if (i >= text.length) clearInterval(interval);
     }, delay);
     return () => clearInterval(interval);
   }, [text, delay]);
@@ -348,7 +348,7 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
                 </div>
                 <div className="text-zinc-300 text-sm mb-1">{exp.role}</div>
                 <div className="text-zinc-400 text-sm leading-relaxed">
-                  <TypewriterText text={exp.desc} delay={5} />
+                  <TypewriterText text={exp.desc} />
                 </div>
               </div>
             ))}
@@ -371,7 +371,7 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
                   <span className="text-zinc-200 font-bold text-sm">{p.title}</span>
                   <span className="text-zinc-500 text-xs px-1.5 py-0.5 border border-zinc-700 rounded-md bg-zinc-800/50">{p.tech}</span>
                 </div>
-                <p className="text-zinc-400 text-sm leading-relaxed"><TypewriterText text={p.impact} delay={5} /></p>
+                <p className="text-zinc-400 text-sm leading-relaxed"><TypewriterText text={p.impact} /></p>
               </div>
             ))}
           </div>
