@@ -69,36 +69,52 @@ const BrailleSpinner = () => {
   return <span className="text-claude">{frames[frameIdx]}</span>;
 };
 
+const CLAUDE_VERBS = [
+  'Clauding...',
+  'Boondoggling...',
+  'Flibbertigibbeting...',
+  'Hullaballooing...',
+  'Dilly-dallying...',
+  'Discombobulating...',
+  'Fiddle-faddling...',
+  'Gitifying...',
+  'Honking...',
+  'Hyperspacing...',
+  'Combobulating...',
+  'Cogitating...',
+  'Booping...',
+  'Bloviating...'
+];
+
 const ThinkingBlock = () => {
-  const verbs = [
-    'Clauding...',
-    'Boondoggling...',
-    'Flibbertigibbeting...',
-    'Hullaballooing...',
-    'Dilly-dallying...',
-    'Discombobulating...',
-    'Fiddle-faddling...',
-    'Gitifying...',
-    'Honking...',
-    'Hyperspacing...',
-    'Combobulating...',
-    'Cogitating...',
-    'Booping...',
-    'Bloviating...'
-  ];
-  const [verbIdx, setVerbIdx] = useState(0);
+  const [verbIdx, setVerbIdx] = useState(() => Math.floor(Math.random() * CLAUDE_VERBS.length));
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setVerbIdx((prev) => (prev + 1) % verbs.length);
-    }, 1500);
-    return () => clearInterval(interval);
-  }, [verbs.length]);
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const cycleVerb = () => {
+      setVerbIdx(prev => {
+        let next;
+        do {
+          next = Math.floor(Math.random() * CLAUDE_VERBS.length);
+        } while (next === prev);
+        return next;
+      });
+
+      const randomDelay = Math.floor(Math.random() * 1800) + 700; // 700ms to 2500ms
+      timeoutId = setTimeout(cycleVerb, randomDelay);
+    };
+
+    const initialDelay = Math.floor(Math.random() * 1800) + 700;
+    timeoutId = setTimeout(cycleVerb, initialDelay);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   return (
     <div className="thinking-block tui-fade-in text-zinc-400 flex items-center gap-2">
       <BrailleSpinner />
-      <span className="text-sm font-medium">{verbs[verbIdx]}</span>
+      <span className="text-sm font-medium">{CLAUDE_VERBS[verbIdx]}</span>
     </div>
   );
 };
