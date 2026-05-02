@@ -176,6 +176,53 @@ const getDidYouMean = (cmd: string) => {
   return minDistance <= 3 ? closest : null;
 };
 
+
+const TypewriterText = ({ text, delay = 5 }: { text: string, delay?: number }) => {
+  const [displayed, setDisplayed] = React.useState('');
+  React.useEffect(() => {
+    let i = 0;
+    const interval = setInterval(() => {
+      setDisplayed(text.substring(0, i));
+      i++;
+      if (i > text.length) clearInterval(interval);
+    }, delay);
+    return () => clearInterval(interval);
+  }, [text, delay]);
+  return <span>{displayed}</span>;
+};
+
+const TaskRunner = ({ tools, children }: { tools: string[], children: React.ReactNode }) => {
+  const [activeIdx, setActiveIdx] = React.useState(0);
+
+  React.useEffect(() => {
+    if (activeIdx < tools.length) {
+      const timer = setTimeout(() => {
+        setActiveIdx(prev => prev + 1);
+      }, 300 + Math.random() * 300);
+      return () => clearTimeout(timer);
+    }
+  }, [activeIdx, tools.length]);
+
+  return (
+    <>
+      <div className="space-y-1 mb-2">
+        {tools.slice(0, activeIdx).map((t, i) => <ToolUse key={i} action={t} />)}
+        {activeIdx < tools.length && (
+           <div className="flex items-center gap-2 text-zinc-500 text-[13px] my-1.5 font-medium">
+              <BrailleSpinner />
+              <span className="text-zinc-400">{tools[activeIdx]}</span>
+           </div>
+        )}
+      </div>
+      {activeIdx >= tools.length && (
+        <div className="tui-fade-in">
+          {children}
+        </div>
+      )}
+    </>
+  );
+};
+
 const CommandOutput = React.memo(({ command, onCommandClick }: { command: string, onCommandClick: (cmd: string) => void }) => {
   const normalizedCmd = command.toLowerCase().trim();
   const args = normalizedCmd.split(' ').filter(Boolean);
@@ -270,10 +317,10 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
     case 'whoami':
       return (
         <div className="my-2 break-words">
-          <ToolUse action="Read file whoami.json" />
-          {isVerbose && <VerboseLogs />}
-          <div className="mt-3 text-zinc-300 mb-2">Here is your profile data:</div>
-          <div className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-y-2">
+          <TaskRunner tools={["List directory ./", "Read file whoami.json"]}>
+            {isVerbose && <VerboseLogs />}
+            <div className="mt-3 text-zinc-300 mb-2">Here is your profile data:</div>
+            <div className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-y-2">
             {PORTFOLIO_DATA.whoami.map((item, i) => (
               <React.Fragment key={i}>
                 <span className="text-zinc-500 font-bold self-center text-sm">{item.label}</span>
@@ -282,14 +329,14 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
             ))}
           </div>
           <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.whoami).length / 4) + 25} />
+          </TaskRunner>
         </div>
       );
     
     case 'experience':
       return (
         <div className="my-2 break-words">
-          <ToolUse action="Read file experience.md" />
-          <ToolUse action="Grep search 'timeline'" />
+          <TaskRunner tools={["Read file experience.md", "Grep search 'timeline'", "Formatting timeline markdown..."]}>
           {isVerbose && <VerboseLogs />}
           <div className="mt-3 text-zinc-300 mb-4">I found the following professional timeline:</div>
           <div className="space-y-5 border-l-2 border-zinc-800 pl-4">
@@ -301,19 +348,20 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
                 </div>
                 <div className="text-zinc-300 text-sm mb-1">{exp.role}</div>
                 <div className="text-zinc-400 text-sm leading-relaxed">
-                  {exp.desc}
+                  <TypewriterText text={exp.desc} delay={5} />
                 </div>
               </div>
             ))}
           </div>
           <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.experience).length / 4) + 40} />
+          </TaskRunner>
         </div>
       );
       
     case 'projects':
       return (
         <div className="my-2 break-words">
-          <ToolUse action="List directory ./projects" />
+          <TaskRunner tools={["List directory ./projects", "Read file projects/metadata.json", "Search github repositories...", "Formatting output..."]}>
           {isVerbose && <VerboseLogs />}
           <div className="mt-3 text-zinc-300 mb-4">Here are the featured builds in your portfolio:</div>
           <div className="space-y-4">
@@ -323,18 +371,19 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
                   <span className="text-zinc-200 font-bold text-sm">{p.title}</span>
                   <span className="text-zinc-500 text-xs px-1.5 py-0.5 border border-zinc-700 rounded-md bg-zinc-800/50">{p.tech}</span>
                 </div>
-                <p className="text-zinc-400 text-sm leading-relaxed">{p.impact}</p>
+                <p className="text-zinc-400 text-sm leading-relaxed"><TypewriterText text={p.impact} delay={5} /></p>
               </div>
             ))}
           </div>
           <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.projects).length / 4) + 30} />
+          </TaskRunner>
         </div>
       );
 
     case 'skills':
       return (
         <div className="my-2 break-words">
-          <ToolUse action="Read file skills.yml" />
+          <TaskRunner tools={["Read file skills.yml"]}>
           {isVerbose && <VerboseLogs />}
           <div className="mt-3 text-zinc-300 mb-2">Technical capabilities:</div>
           <div className="my-4 space-y-3 border-l-2 border-zinc-800 pl-4">
@@ -346,13 +395,14 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
             ))}
           </div>
           <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.skills).length / 4) + 20} />
+          </TaskRunner>
         </div>
       );
 
     case 'contact':
       return (
         <div className="my-2 break-words">
-          <ToolUse action="Read file contact.json" />
+          <TaskRunner tools={["Read file contact.json", "Verify external uplinks..."]}>
           {isVerbose && <VerboseLogs />}
           <div className="mt-3 text-zinc-300 mb-2">Secure communication uplinks:</div>
           <div className="space-y-2 border-l-2 border-zinc-800 pl-4">
@@ -366,6 +416,7 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
             ))}
           </div>
           <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.contact).length / 4) + 20} />
+          </TaskRunner>
         </div>
       );
 
@@ -434,6 +485,8 @@ export default function App() {
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isBooting, setIsBooting] = useState(true);
+  const [sessionTokens, setSessionTokens] = useState(0);
+  const [isTerminated, setIsTerminated] = useState(false);
   
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -470,10 +523,21 @@ export default function App() {
   }, [history, isProcessing, isBooting]);
 
   const executeCommand = async (cmd: string) => {
-    if (isProcessing || isBooting) return;
+    if (isProcessing || isBooting || isTerminated) return;
     const trimmedCmd = cmd.trim();
     setInput('');
     setHistoryIndex(-1);
+    
+    if (['exit', 'quit', '/exit', '/quit'].includes(trimmedCmd.toLowerCase())) {
+      setIsTerminated(true);
+      setCommandHistory(prev => [...prev, trimmedCmd]);
+      setHistory(h => [
+        ...h, 
+        { id: Date.now().toString(), type: 'input', content: trimmedCmd },
+        { id: (Date.now()+1).toString(), type: 'system', content: `Session terminated. Final cost: ${(sessionTokens * 0.000015).toFixed(4)}. Have a great day!` }
+      ]);
+      return;
+    }
     
     if (trimmedCmd.toLowerCase() === 'clear' || trimmedCmd.toLowerCase() === '/clear') {
       setHistory([]);
@@ -484,6 +548,12 @@ export default function App() {
       setHistory(h => [...h, { id: Date.now().toString(), type: 'input', content: trimmedCmd }]);
       setIsProcessing(true);
       await new Promise(r => setTimeout(r, 300 + Math.random() * 400)); // 0.3s to 0.7s delay
+      const tokenMap: Record<string, number> = {
+        whoami: 125, experience: 240, projects: 130, skills: 120, contact: 70, help: 145, '/help': 145
+      };
+      const addedTokens = tokenMap[trimmedCmd.toLowerCase().split(' ')[0]] || 45;
+      setSessionTokens(prev => prev + addedTokens);
+
       setHistory(h => [...h, { 
         id: (Date.now() + 1).toString(), 
         type: 'output', 
@@ -591,6 +661,14 @@ export default function App() {
         </div>
       </main>
 
+      {/* Sticky Status Bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 p-2 px-4 text-[11px] text-zinc-500 flex justify-between z-50">
+        <div>AME-OS v2.0.26</div>
+        <div className="flex gap-4">
+          <span>Context: {sessionTokens} tokens</span>
+          <span>Session Cost: ${(sessionTokens * 0.000015).toFixed(5)}</span>
+        </div>
+      </div>
     </div>
   );
 }
