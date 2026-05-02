@@ -224,7 +224,7 @@ const getDidYouMean = (cmd: string) => {
 
 const ScrollContext = React.createContext<(() => void) | null>(null);
 
-const TypewriterText = ({ text, delay = 18, onComplete }: { text: string, delay?: number, onComplete?: () => void }) => {
+const TypewriterText = ({ text, delay = 8, onComplete }: { text: string, delay?: number, onComplete?: () => void }) => {
   const [displayed, setDisplayed] = React.useState('');
   const scrollTo = React.useContext(ScrollContext);
   const completedRef = React.useRef(false);
