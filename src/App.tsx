@@ -177,26 +177,22 @@ const getDidYouMean = (cmd: string) => {
 };
 
 
-const TypewriterText = ({ text, delay = 5 }: { text: string, delay?: number }) => {
+const TypewriterText = ({ text, delay = 15 }: { text: string, delay?: number }) => {
   const [displayed, setDisplayed] = React.useState('');
 
   React.useEffect(() => {
-    let current = '';
     let i = 0;
-    let lastTime: number | null = null;
     let req: number;
 
-    const animate = (time: number) => {
-      if (lastTime === null) {
-        lastTime = time;
-      }
-      const charsToAdd = Math.floor((time - lastTime) / delay);
-      if (charsToAdd > 0) {
-        current += text.substring(i, i + charsToAdd);
-        i += charsToAdd;
-        lastTime = time - ((time - lastTime) % delay);
-        setDisplayed(current);
-      }
+    const animate = () => {
+      // Add a fixed number of characters per frame based on delay.
+      // This guarantees no massive "catch-ups" if frames are dropped.
+      const charsPerFrame = Math.max(1, Math.round(16 / delay));
+      i += charsPerFrame;
+      if (i > text.length) i = text.length;
+
+      setDisplayed(text.substring(0, i));
+
       if (i < text.length) {
         req = requestAnimationFrame(animate);
       }
