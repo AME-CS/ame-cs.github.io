@@ -55,6 +55,49 @@ const PORTFOLIO_DATA = {
 // COMPONENTS
 // ----------------------------------------------------------------------
 
+const ASCII_BANNER = `
+ █████╗ ███╗   ███╗███████╗
+██╔══██╗████╗ ████║██╔════╝
+███████║██╔████╔██║█████╗  
+██╔══██║██║╚██╔╝██║██╔══╝  
+██║  ██║██║ ╚═╝ ██║███████╗
+╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝
+
+ ██████╗ ██████╗ ██████╗ ███████╗
+██╔════╝██╔═══██╗██╔══██╗██╔════╝
+██║     ██║   ██║██║  ██║█████╗  
+██║     ██║   ██║██║  ██║██╔══╝  
+╚██████╗╚██████╔╝██████╔╝███████╗
+ ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝
+`.trimStart();
+
+const StartupBanner = () => {
+  return (
+    <div className="mb-6 select-none">
+      <pre className="text-claude text-[10px] sm:text-xs leading-[1.1] font-bold whitespace-pre" aria-label="AME Code ASCII Banner">
+        {ASCII_BANNER}
+      </pre>
+      <div className="mt-3 space-y-1 text-[12px] sm:text-[13px]">
+        <div className="flex items-center gap-2">
+          <span className="text-zinc-500">v2.0.26</span>
+          <span className="text-zinc-700">│</span>
+          <span className="text-zinc-500">model:</span>
+          <span className="text-zinc-300">claude-sonnet-4-20250514</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-zinc-500">cwd:</span>
+          <span className="text-zinc-400">~/portfolio</span>
+          <span className="text-zinc-700">│</span>
+          <span className="text-zinc-600 italic">Type</span>
+          <span className="text-claude font-semibold">/help</span>
+          <span className="text-zinc-600 italic">to see available commands</span>
+        </div>
+      </div>
+      <div className="mt-3 border-t border-zinc-800" />
+    </div>
+  );
+};
+
 const BrailleSpinner = () => {
   const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
   const [frameIdx, setFrameIdx] = useState(0);
@@ -570,7 +613,7 @@ export default function App() {
       setHistory([{ 
         id: 'b1', 
         type: 'output', 
-        content: "Welcome to AME Code! Type /help to see available commands.",
+        content: '',
         command: 'welcome' 
       }]);
       setIsBooting(false);
@@ -692,9 +735,7 @@ export default function App() {
               {item.type === 'output' && (
                 <div className="tui-fade-in">
                   {item.command === 'welcome' ? (
-                    <div className="text-zinc-200 mt-2 mb-4 font-semibold text-sm">
-                      {item.content}
-                    </div>
+                    <StartupBanner />
                   ) : (
                     <CommandOutput command={item.command!} onCommandClick={executeCommand} />
                   )}
@@ -738,7 +779,7 @@ export default function App() {
 
       {/* Sticky Status Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 p-2 px-4 text-[11px] text-zinc-500 flex justify-between z-50">
-        <div>AME-OS v2.0.26</div>
+        <div>AME Code v2.0.26</div>
         <div className="flex gap-4">
           <span>Context: {sessionTokens} tokens</span>
           <span>Session Cost: ${(sessionTokens * 0.000015).toFixed(5)}</span>
