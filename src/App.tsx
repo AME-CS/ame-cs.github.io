@@ -379,7 +379,7 @@ export default function App() {
 
       {/* Terminal Main Content */}
       <main className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar">
-        <div className="max-w-4xl mx-auto pb-40">
+        <div className="w-full pb-40">
           {history.map((item) => (
             <div key={item.id} className="tui-fade-in">
               {item.type === 'system' && (
