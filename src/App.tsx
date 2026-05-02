@@ -177,17 +177,32 @@ const getDidYouMean = (cmd: string) => {
 };
 
 
-const TypewriterText = ({ text, delay = 20 }: { text: string, delay?: number }) => {
+const TypewriterText = ({ text, delay = 5 }: { text: string, delay?: number }) => {
   const [displayed, setDisplayed] = React.useState('');
+
   React.useEffect(() => {
+    let current = '';
     let i = 0;
-    const interval = setInterval(() => {
-      i += 1;
-      setDisplayed(text.substring(0, i));
-      if (i >= text.length) clearInterval(interval);
-    }, delay);
-    return () => clearInterval(interval);
+    let lastTime = performance.now();
+    let req: number;
+
+    const animate = (time: number) => {
+      const charsToAdd = Math.floor((time - lastTime) / delay);
+      if (charsToAdd > 0) {
+        current += text.substring(i, i + charsToAdd);
+        i += charsToAdd;
+        lastTime = time - ((time - lastTime) % delay);
+        setDisplayed(current);
+      }
+      if (i < text.length) {
+        req = requestAnimationFrame(animate);
+      }
+    };
+
+    req = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(req);
   }, [text, delay]);
+
   return <span>{displayed}</span>;
 };
 
