@@ -51,6 +51,29 @@ const PORTFOLIO_DATA = {
   }
 };
 
+const FORTUNE_QUOTES = [
+  '"The best way to predict the future is to invent it." — Alan Kay',
+  '"Any sufficiently advanced technology is indistinguishable from magic." — Arthur C. Clarke',
+  '"First, solve the problem. Then, write the code." — John Johnson',
+  '"Simplicity is prerequisite for reliability." — Edsger Dijkstra',
+  '"The most dangerous phrase is: We\'ve always done it this way." — Grace Hopper',
+  '"Programs must be written for people to read." — Hal Abelson',
+  '"Talk is cheap. Show me the code." — Linus Torvalds',
+  '"The only way to learn a new programming language is by writing programs in it." — Dennis Ritchie',
+  '"Intelligence is the ability to avoid doing work, yet getting the work done." — Linus Torvalds',
+  '"In theory, there is no difference between theory and practice. In practice, there is." — Yogi Berra',
+  '"The computer was born to solve problems that did not exist before." — Bill Gates',
+  '"Debugging is twice as hard as writing the code in the first place." — Brian Kernighan',
+];
+
+const NEOFETCH_LOGO = `
+    ╔══╗
+   ╔╝  ╚╗
+  ╔╝ ▲  ╚╗
+ ╔╝ ╱ ╲  ╚╗
+╔╝ ╱AME╲  ╚╗
+╚═╧═════╧══╝`.trimStart();
+
 // ----------------------------------------------------------------------
 // COMPONENTS
 // ----------------------------------------------------------------------
@@ -185,7 +208,7 @@ const MetricsFooter = ({ tokens }: { tokens: number }) => {
   );
 };
 
-const VALID_COMMANDS = ['whoami', 'experience', 'projects', 'skills', 'contact', 'help', 'clear'];
+const VALID_COMMANDS = ['whoami', 'experience', 'projects', 'skills', 'contact', 'neofetch', 'resume', 'history', 'fortune', 'help', 'clear'];
 
 const getLevenshteinDistance = (a: string, b: string) => {
   const matrix = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
@@ -323,7 +346,7 @@ const TaskRunner = ({ tools, children }: { tools: string[], children: React.Reac
   );
 };
 
-const CommandOutput = React.memo(({ command, onCommandClick }: { command: string, onCommandClick: (cmd: string) => void }) => {
+const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = [] }: { command: string, onCommandClick: (cmd: string) => void, commandHistory?: string[] }) => {
   const normalizedCmd = command.toLowerCase().trim();
   const args = normalizedCmd.split(' ').filter(Boolean);
   const baseCmd = args[0] || '';
@@ -530,6 +553,107 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
       );
     }
 
+    case 'neofetch': {
+      const startYear = 2022;
+      const now = new Date();
+      const uptimeYears = now.getFullYear() - startYear;
+      const uptimeMonths = now.getMonth();
+      const sysInfo = [
+        { label: 'OS', value: 'AME-OS v2.0.26' },
+        { label: 'Host', value: 'Austin, TX' },
+        { label: 'Kernel', value: 'ame-cortex-1.0' },
+        { label: 'Uptime', value: `${uptimeYears} years, ${uptimeMonths} months` },
+        { label: 'Shell', value: 'ame-code 2.0.26' },
+        { label: 'Languages', value: 'Rust, Python, Java, TS, Go, C++' },
+        { label: 'Stack', value: 'LangGraph, K8s, AWS, Kafka' },
+        { label: 'Editor', value: 'Neovim / VS Code' },
+        { label: 'Theme', value: 'AME Dark [#d97757]' },
+      ];
+      return (
+        <div className="my-2 break-words">
+          <TaskRunner tools={["Gathering system information...", "Reading hardware specs..."]}>
+            <div className="flex flex-col sm:flex-row gap-4 mt-3">
+              <pre className="text-claude text-[10px] sm:text-xs leading-[1.2] font-bold whitespace-pre shrink-0">{NEOFETCH_LOGO}</pre>
+              <div className="space-y-0.5 text-sm min-w-0">
+                <div className="text-zinc-200 font-bold">ahmed@portfolio</div>
+                <div className="text-zinc-700">{'─'.repeat(20)}</div>
+                {sysInfo.map((s, i) => (
+                  <div key={i} className="flex gap-2">
+                    <span className="text-claude font-bold shrink-0">{s.label}</span>
+                    <span className="text-zinc-400 break-all">{s.value}</span>
+                  </div>
+                ))}
+                <div className="flex gap-1 mt-2">
+                  {['#d97757','#18181b','#27272a','#a1a1aa','#f4f4f5','#22c55e','#ef4444','#3b82f6'].map((c,i) => (
+                    <span key={i} className="w-4 h-4 rounded-sm inline-block" style={{ backgroundColor: c }} />
+                  ))}
+                </div>
+              </div>
+            </div>
+            <MetricsFooter tokens={180} />
+          </TaskRunner>
+        </div>
+      );
+    }
+
+    case 'resume': {
+      return (
+        <div className="my-2 break-words">
+          <TaskRunner tools={["Locating resume source...", "Compiling LaTeX...", "Generating PDF..."]}>
+            <div className="mt-3 text-zinc-300 text-sm">
+              <div className="mb-2">Resume compiled successfully.</div>
+              <a
+                href="/resume.pdf"
+                download="Ahmed_Eid_Resume.pdf"
+                className="inline-flex items-center gap-2 text-claude hover:underline font-semibold transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <span>📄</span>
+                <span>Download Ahmed_Eid_Resume.pdf</span>
+              </a>
+              <div className="text-zinc-600 text-xs mt-2">1 page · LaTeX compiled · PDF</div>
+            </div>
+            <MetricsFooter tokens={60} />
+          </TaskRunner>
+        </div>
+      );
+    }
+
+    case 'fortune': {
+      const quote = FORTUNE_QUOTES[Math.floor(Math.random() * FORTUNE_QUOTES.length)];
+      const items: StreamItem[] = [
+        { render: (s, d) => <div className="mt-3 text-zinc-300 text-sm italic leading-relaxed">{s ? <TypewriterText text={quote} onComplete={d} /> : quote}</div> },
+      ];
+      return (
+        <div className="my-2 break-words">
+          <ToolUse action="Read file /usr/share/fortune/quotes" />
+          <StreamSequence items={items} stepState={sharedStep} offset={0} />
+          <MetricsFooter tokens={35} />
+        </div>
+      );
+    }
+
+    case 'history': {
+      return (
+        <div className="my-2 break-words">
+          <ToolUse action="Read session history" />
+          <div className="mt-3 space-y-0.5">
+            {commandHistory.length === 0 ? (
+              <div className="text-zinc-500 text-sm">No commands in history.</div>
+            ) : (
+              commandHistory.map((cmd, i) => (
+                <div key={i} className="flex gap-3 text-sm">
+                  <span className="text-zinc-600 w-6 text-right shrink-0">{i + 1}</span>
+                  <span className="text-zinc-300 cursor-pointer hover:text-claude transition-colors" onClick={() => onCommandClick(cmd)}>{cmd}</span>
+                </div>
+              ))
+            )}
+          </div>
+          <MetricsFooter tokens={Math.max(30, commandHistory.length * 5)} />
+        </div>
+      );
+    }
+
     case '/help':
     case 'help': {
       const helpCmds = [
@@ -538,6 +662,10 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
         { c: 'projects', d: 'View featured projects' },
         { c: 'skills', d: 'View technical skills' },
         { c: 'contact', d: 'View contact links' },
+        { c: 'neofetch', d: 'Display system info' },
+        { c: 'resume', d: 'Download resume as PDF' },
+        { c: 'fortune', d: 'Random programming quote' },
+        { c: 'history', d: 'Show command history' },
         { c: '/clear', d: 'Clear the terminal output' },
         { c: '/help', d: 'Show this help message' }
       ];
@@ -554,7 +682,7 @@ const CommandOutput = React.memo(({ command, onCommandClick }: { command: string
           <div className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-x-2 gap-y-1 px-2 -mx-2">
             <StreamSequence items={items.slice(1)} stepState={sharedStep} offset={1} />
           </div>
-          <MetricsFooter tokens={145} />
+          <MetricsFooter tokens={190} />
         </div>
       );
     }
@@ -695,7 +823,8 @@ export default function App() {
       setIsProcessing(true);
       await new Promise(r => setTimeout(r, 300 + Math.random() * 400)); // 0.3s to 0.7s delay
       const tokenMap: Record<string, number> = {
-        whoami: 125, experience: 240, projects: 130, skills: 120, contact: 70, help: 145, '/help': 145
+        whoami: 125, experience: 240, projects: 130, skills: 120, contact: 70,
+        neofetch: 180, resume: 60, history: 30, fortune: 35, help: 190, '/help': 190
       };
       const addedTokens = tokenMap[trimmedCmd.toLowerCase().split(' ')[0]] || 45;
       setSessionTokens(prev => prev + addedTokens);
@@ -732,7 +861,7 @@ export default function App() {
       }
     } else if (e.key === 'Tab') {
       e.preventDefault();
-      const cmds = ['whoami', 'experience', 'projects', 'skills', 'contact', 'help', 'clear'];
+      const cmds = ['whoami', 'experience', 'projects', 'skills', 'contact', 'neofetch', 'resume', 'history', 'fortune', 'help', 'clear'];
       const match = cmds.find(c => c.startsWith(input.toLowerCase()));
       if (match) setInput(match);
     }
@@ -767,7 +896,7 @@ export default function App() {
                   {item.command === 'welcome' ? (
                     <StartupBanner />
                   ) : (
-                    <CommandOutput command={item.command!} onCommandClick={executeCommand} />
+                    <CommandOutput command={item.command!} onCommandClick={executeCommand} commandHistory={commandHistory} />
                   )}
                 </div>
               )}
@@ -794,6 +923,9 @@ export default function App() {
                     autoComplete="off"
                     autoFocus
                   />
+                  {!input && (
+                    <span className="absolute left-0 text-zinc-600 text-sm pointer-events-none select-none">try 'whoami' or 'projects'...</span>
+                  )}
                   <div className="absolute left-0 top-0 pointer-events-none flex items-center h-full">
                     <span className="text-transparent whitespace-pre text-sm">{input}</span>
                     <span className="cursor-block"></span>
