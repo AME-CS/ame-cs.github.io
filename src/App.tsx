@@ -974,7 +974,7 @@ export default function App() {
       setCommandHistory(prev => [...prev, trimmedCmd]);
       setHistory(h => [
         ...h, 
-        { id: Date.now().toString(), type: 'input', content: trimmedCmd },
+        { id: Date.now().toString(), type: 'input', content: trimmedCmd, cwd },
         { id: (Date.now()+1).toString(), type: 'system', content: `Session terminated. Final cost: ${(sessionTokens * 0.000015).toFixed(4)}. Have a great day!` }
       ]);
       return;
@@ -989,7 +989,7 @@ export default function App() {
       setCommandHistory(prev => [...prev, trimmedCmd]);
       setHistory(h => [
         ...h, 
-        { id: Date.now().toString(), type: 'input', content: trimmedCmd },
+        { id: Date.now().toString(), type: 'input', content: trimmedCmd, cwd },
         { id: (Date.now()+1).toString(), type: 'system', content: 'Initializing secure mail transfer protocol...' }
       ]);
       setEmailState({ step: 'subject', subject: '' });
@@ -1013,7 +1013,7 @@ export default function App() {
       if (error) {
         setHistory(h => [
           ...h, 
-          { id: Date.now().toString(), type: 'input', content: trimmedCmd },
+          { id: Date.now().toString(), type: 'input', content: trimmedCmd, cwd },
           { id: (Date.now()+1).toString(), type: 'output', command: `echo ${error}`, content: '', cwd }
         ]);
         return;
@@ -1021,7 +1021,7 @@ export default function App() {
 
       setHistory(h => [
         ...h, 
-        { id: Date.now().toString(), type: 'input', content: trimmedCmd },
+        { id: Date.now().toString(), type: 'input', content: trimmedCmd, cwd },
         { id: (Date.now()+1).toString(), type: 'output', command: trimmedCmd, content: '', cwd }
       ]);
       setTimeout(() => setVimFile(file), 1500);
@@ -1032,7 +1032,7 @@ export default function App() {
       setCommandHistory(prev => [...prev, trimmedCmd]);
       setHistory(h => [
         ...h, 
-        { id: Date.now().toString(), type: 'input', content: trimmedCmd },
+        { id: Date.now().toString(), type: 'input', content: trimmedCmd, cwd },
         { id: (Date.now()+1).toString(), type: 'output', command: trimmedCmd, content: '', cwd }
       ]);
       setTimeout(() => setIsGuiMode(true), 2000);
@@ -1055,7 +1055,7 @@ export default function App() {
       setCommandHistory(prev => [...prev, trimmedCmd]);
       setHistory(h => [
         ...h,
-        { id: Date.now().toString(), type: 'input', content: trimmedCmd },
+        { id: Date.now().toString(), type: 'input', content: trimmedCmd, cwd },
         ...(error ? [{ id: (Date.now()+1).toString(), type: 'output' as const, command: `echo ${error}`, content: '', cwd }] : [])
       ]);
 
@@ -1069,7 +1069,7 @@ export default function App() {
     }
     if (trimmedCmd) {
       setCommandHistory(prev => [...prev, trimmedCmd]);
-      setHistory(h => [...h, { id: Date.now().toString(), type: 'input', content: trimmedCmd }]);
+      setHistory(h => [...h, { id: Date.now().toString(), type: 'input', content: trimmedCmd, cwd }]);
       setIsProcessing(true);
       await new Promise(r => setTimeout(r, 300 + Math.random() * 400)); // 0.3s to 0.7s delay
       const tokenMap: Record<string, number> = {
@@ -1212,7 +1212,9 @@ export default function App() {
 
               {item.type === 'input' && (
                 <div className="flex items-center gap-2 mt-4 mb-2">
-                  <span className={item.overridePrefix ? "text-zinc-500 font-bold text-sm leading-none" : "text-claude font-bold text-sm leading-none"}>{item.overridePrefix || '❯'}</span>
+                  <span className={item.overridePrefix ? "text-zinc-500 font-bold text-sm leading-none" : "text-claude font-bold text-sm leading-none whitespace-pre"}>
+                    {item.overridePrefix || `${item.cwd || '~'} ❯`}
+                  </span>
                   <span className="text-zinc-100 text-sm leading-none">{item.content}</span>
                 </div>
               )}
@@ -1239,7 +1241,7 @@ export default function App() {
             <div className="flex flex-col mt-6 transition-opacity duration-200">
               <div className="flex items-center gap-2 relative">
                 <span className={emailState ? "text-zinc-500 font-bold text-sm leading-none whitespace-pre" : "text-claude text-sm font-bold leading-none whitespace-pre"}>
-                  {emailState ? (emailState.step === 'subject' ? 'Subject: ' : 'Message: ') : '❯'}
+                  {emailState ? (emailState.step === 'subject' ? 'Subject: ' : 'Message: ') : `${cwd} ❯`}
                 </span>
                 <div className="relative flex-1 flex items-center">
                   <input
