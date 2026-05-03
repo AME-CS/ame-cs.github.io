@@ -418,13 +418,23 @@ export const GuiView = ({ onClose }: { onClose: () => void }) => {
             `}</style>
             
             <div className="inner-container">
-                <div style={{ position: 'fixed', top: '1rem', right: '1rem', zIndex: 1000 }}>
+                <div style={{ position: 'fixed', top: '1.5rem', right: '1.5rem', zIndex: 1000 }}>
                     <button 
                         onClick={onClose} 
                         className="pill" 
-                        style={{ background: 'var(--gui-fg)', color: 'var(--gui-bg)', borderColor: 'var(--gui-fg)', padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                        style={{ 
+                            background: 'var(--gui-code-bg)', 
+                            color: 'var(--gui-code-fg)', 
+                            borderColor: 'var(--gui-border)', 
+                            padding: '0.6rem 1.2rem', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '0.6rem',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                            fontFamily: 'var(--gui-font-mono)'
+                        }}
                     >
-                        <span className="dot dot-red" style={{ display: 'inline-block' }}></span> Close GUI
+                        <span style={{ color: 'var(--gui-accent)' }}>&gt;_</span> Terminal Mode
                     </button>
                 </div>
                 

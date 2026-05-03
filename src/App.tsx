@@ -1188,6 +1188,16 @@ export default function App() {
 
       {vimFile && <VimEditor filename={vimFile} onExit={() => setVimFile(null)} />}
       
+      {guiState === 'terminal' && !vimFile && !isBooting && (
+        <button
+          onClick={() => executeCommand('gui')}
+          className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[100] text-[11px] sm:text-xs px-3 py-1.5 bg-zinc-900/80 backdrop-blur text-zinc-400 border border-zinc-800 hover:border-zinc-600 hover:text-zinc-200 transition-all flex items-center gap-2 rounded tui-fade-in group shadow-lg"
+          title="Switch to Graphical User Interface"
+        >
+          <span className="group-hover:text-claude transition-colors">✦</span> GUI Mode
+        </button>
+      )}
+
       {guiState === 'booting' && (
         <div className="fixed inset-0 bg-zinc-950 z-[1000] flex flex-col items-center justify-center p-6 text-center">
           <div className="w-16 h-16 border-2 border-claude border-t-transparent rounded-full animate-spin mb-6" />
