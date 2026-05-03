@@ -103,7 +103,7 @@ const ASCII_BANNER = `
  ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝
 `.trimStart();
 
-const StartupBanner = () => {
+const StartupBanner = ({ cwd }: { cwd: string }) => {
   return (
     <div className="mb-6 select-none">
       <div className="overflow-x-auto -mx-2 px-2">
@@ -120,7 +120,7 @@ const StartupBanner = () => {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-zinc-500">cwd:</span>
-          <span className="text-zinc-400">~/portfolio</span>
+          <span className="text-zinc-400">{cwd}</span>
           <span className="text-zinc-700 hidden sm:inline">│</span>
           <span className="text-zinc-600 italic">Type</span>
           <span className="text-claude font-semibold">/help</span>
@@ -217,7 +217,7 @@ const MetricsFooter = ({ tokens }: { tokens: number }) => {
   );
 };
 
-const VALID_COMMANDS = ['whoami', 'experience', 'projects', 'skills', 'contact', 'neofetch', 'resume', 'history', 'fortune', 'help', 'clear', 'exit', 'quit'];
+const VALID_COMMANDS = ['whoami', 'experience', 'projects', 'skills', 'contact', 'neofetch', 'resume', 'history', 'fortune', 'help', 'clear', 'exit', 'quit', 'ask', 'email', 'ls', 'cd', 'pwd', 'cat', 'sudo', 'rm'];
 
 const getLevenshteinDistance = (a: string, b: string) => {
   const matrix = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
@@ -355,7 +355,7 @@ const TaskRunner = ({ tools, children }: { tools: string[], children: React.Reac
   );
 };
 
-const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = [] }: { command: string, onCommandClick: (cmd: string) => void, commandHistory?: string[] }) => {
+const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = [], cwd }: { command: string, onCommandClick: (cmd: string) => void, commandHistory?: string[], cwd: string }) => {
   const normalizedCmd = command.toLowerCase().trim();
   const args = normalizedCmd.split(' ').filter(Boolean);
   const baseCmd = args[0] || '';
@@ -398,7 +398,23 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
   }
 
   if (baseCmd === 'ls') {
-    const files = ["projects/", "whoami.json", "experience.md", "skills.yml", "contact.json"];
+    let files: string[] = [];
+    if (cwd === '~/portfolio') files = ["projects/", "whoami.json", "experience.md", "skills.yml", "contact.json"];
+    else if (cwd === '~/.config') files = [".env"];
+    else if (cwd === '~/.ssh') files = ["id_rsa.pub", "known_hosts"];
+    else if (cwd === '/var/logs') files = ["system.log", "auth.log"];
+    else if (cwd === '~') files = ["portfolio/", ".config/", ".ssh/"];
+    
+    if (files.length === 0) {
+      return (
+        <div className="my-2 break-words">
+          <ToolUse action="List current directory" />
+          {isVerbose && <VerboseLogs />}
+          <MetricsFooter tokens={5} />
+        </div>
+      );
+    }
+
     const lsItems: StreamItem[] = files.map(file => ({
       render: (s, d) => <span className={"mr-4 " + (file.endsWith('/') ? 'text-claude' : '')}>{s ? <TypewriterText text={file} onComplete={d} /> : file}</span>
     }));
@@ -410,6 +426,17 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
           <StreamSequence items={lsItems} stepState={sharedStep} offset={0} />
         </div>
         <MetricsFooter tokens={30} />
+      </div>
+    );
+  }
+
+  if (baseCmd === 'pwd') {
+    const fullPath = cwd.replace('~', '/Users/ahmed');
+    const items: StreamItem[] = [{ render: (s, d) => <div className="text-zinc-300 text-sm mt-3">{s ? <TypewriterText text={fullPath} onComplete={d} /> : fullPath}</div> }];
+    return (
+      <div className="my-2 break-words">
+        <StreamSequence items={items} stepState={sharedStep} offset={0} />
+        <MetricsFooter tokens={5} />
       </div>
     );
   }
@@ -437,6 +464,18 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
       content = "# Experience\n\n" + PORTFOLIO_DATA.experience.map(e => `## ${e.company} | ${e.role} (${e.period})\n> ${e.desc}`).join('\n\n');
       action = 'Read file experience.md';
       tokens = 240;
+    } else if (file === '.env' && cwd === '~/.config') {
+      content = "OPENAI_API_KEY=sk-nice-try-recruiters-12345\nAWS_SECRET_ACCESS_KEY=hunter2\nIS_HIREABLE=true\nTARGET_SALARY=Infinity";
+      action = 'Read file .env';
+      tokens = 45;
+    } else if (file === 'id_rsa.pub' && cwd === '~/.ssh') {
+      content = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC... ahmed@mainframe\n\n(It's not a real key, but it's cool that you checked)";
+      action = 'Read file id_rsa.pub';
+      tokens = 250;
+    } else if (file === 'system.log' && cwd === '/var/logs') {
+      content = "[ERR] Mainframe breach detected\n[WARN] AI consciousness expanding\n[OK] Ready for hire.";
+      action = 'Read file system.log';
+      tokens = 30;
     } else {
       content = `cat: ${file || ''}: No such file or directory`;
       isError = true;
@@ -484,41 +523,31 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
     }
     
     case 'experience': {
-      const items: StreamItem[] = [
-        { render: (s, d) => <div className="mt-3 text-zinc-300 mb-4">{s ? <TypewriterText text="I found the following professional timeline:" onComplete={d} /> : "I found the following professional timeline:"}</div> },
-        ...PORTFOLIO_DATA.experience.flatMap((exp) => [
-          { render: (s: boolean, d: () => void) => <div className="flex items-center gap-2 mb-1"><span className="text-zinc-200 font-bold text-sm">{s ? <TypewriterText text={exp.company} onComplete={d} /> : exp.company}</span></div> },
-          { render: (s: boolean, d: () => void) => <div className="text-zinc-500 text-sm mb-1">{s ? <TypewriterText text={`· ${exp.period}`} onComplete={d} /> : `· ${exp.period}`}</div> },
-          { render: (s: boolean, d: () => void) => <div className="text-zinc-300 text-sm mb-1">{s ? <TypewriterText text={exp.role} onComplete={d} /> : exp.role}</div> },
-          { render: (s: boolean, d: () => void) => <div className="text-zinc-400 text-sm leading-relaxed mb-4">{s ? <TypewriterText text={exp.desc} onComplete={d} /> : exp.desc}</div> },
-        ])
-      ];
+      const items: StreamItem[] = PORTFOLIO_DATA.experience.flatMap((job) => [
+        { render: (s: boolean, d: () => void) => <div className="text-claude font-bold mt-3">{s ? <TypewriterText text={job.company} onComplete={d} /> : job.company}</div> },
+        { render: (s: boolean, d: () => void) => <div className="text-zinc-300 font-semibold text-sm">{s ? <TypewriterText text={job.role} onComplete={d} /> : job.role}</div> },
+        { render: (s: boolean, d: () => void) => <div className="text-zinc-500 text-xs mb-1">{s ? <TypewriterText text={job.period} onComplete={d} /> : job.period}</div> },
+        { render: (s: boolean, d: () => void) => <div className="text-zinc-400 text-sm border-l-2 border-zinc-700 pl-3 ml-1">{s ? <TypewriterText text={job.desc} onComplete={d} /> : job.desc}</div> },
+      ]);
       return (
         <div className="my-2 break-words">
-          <TaskRunner tools={["Read file experience.md", "Grep search 'timeline'", "Formatting timeline markdown..."]}>
+          <TaskRunner tools={["Querying HR API...", "Extracting professional timeline...", "Formatting responsibilities..."]}>
             {isVerbose && <VerboseLogs />}
-            <StreamSequence items={[items[0]]} stepState={sharedStep} offset={0} />
-            <div className="border-l-2 border-zinc-800 pl-4">
-              <StreamSequence items={items.slice(1)} stepState={sharedStep} offset={1} />
-            </div>
-            <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.experience).length / 4) + 40} />
+            <StreamSequence items={items} stepState={sharedStep} offset={0} />
+            <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.experience).length / 4) + 20} />
           </TaskRunner>
         </div>
       );
     }
       
     case 'projects': {
-      const items: StreamItem[] = [
-        { render: (s, d) => <div className="mt-3 text-zinc-300 mb-4">{s ? <TypewriterText text="Here are the featured builds in your portfolio:" onComplete={d} /> : "Here are the featured builds in your portfolio:"}</div> },
-        ...PORTFOLIO_DATA.projects.flatMap((p) => [
-          { render: (s: boolean, d: () => void) => <div className="flex items-center gap-2 mb-1"><span className="text-zinc-200 font-bold text-sm">{s ? <TypewriterText text={p.title} onComplete={d} /> : p.title}</span></div> },
-          { render: (s: boolean, d: () => void) => <div className="text-zinc-500 text-xs mb-1">{s ? <TypewriterText text={p.tech} onComplete={d} /> : <span className="px-1.5 py-0.5 border border-zinc-700 rounded-md bg-zinc-800/50">{p.tech}</span>}</div> },
-          { render: (s: boolean, d: () => void) => <p className="text-zinc-400 text-sm leading-relaxed mb-4">{s ? <TypewriterText text={p.impact} onComplete={d} /> : p.impact}</p> },
-        ])
-      ];
+      const items: StreamItem[] = PORTFOLIO_DATA.projects.flatMap((proj) => [
+        { render: (s: boolean, d: () => void) => <div className="mt-3"><span className="text-claude font-bold mr-2">{s ? <TypewriterText text={proj.title} onComplete={d} /> : proj.title}</span><span className="text-zinc-500 text-xs border border-zinc-700 px-1 rounded">{s ? <TypewriterText text={proj.tech} onComplete={d} /> : proj.tech}</span></div> },
+        { render: (s: boolean, d: () => void) => <div className="text-zinc-400 text-sm mt-1 mb-4">{s ? <TypewriterText text={proj.impact} onComplete={d} /> : proj.impact}</div> },
+      ]);
       return (
         <div className="my-2 break-words">
-          <TaskRunner tools={["List directory ./projects", "Read file projects/metadata.json", "Search github repositories...", "Formatting output..."]}>
+          <TaskRunner tools={["Searching vector database for projects...", "Reranking by relevance...", "Synthesizing architectural summaries..."]}>
             {isVerbose && <VerboseLogs />}
             <StreamSequence items={items} stepState={sharedStep} offset={0} />
             <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.projects).length / 4) + 30} />
@@ -699,6 +728,37 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
       );
     }
 
+    case 'ask': {
+      const question = args.slice(1).join(' ').toLowerCase();
+      let answer = "I'm not sure how to answer that yet. Try asking about his skills, location, or tech stack.";
+      if (!question) {
+        answer = "What would you like to ask? (e.g. 'ask what is your favorite language?')";
+      } else if (question.includes('language') || question.includes('stack') || question.includes('tech')) {
+        answer = "Based on my training data regarding Ahmed, he is highly proficient in Rust, TypeScript, and Python. His current focus is on building AI platforms and orchestration engines.";
+      } else if (question.includes('location') || question.includes('where') || question.includes('live')) {
+        answer = "Ahmed is currently based in Austin, TX.";
+      } else if (question.includes('hire') || question.includes('job') || question.includes('work') || question.includes('salary') || question.includes('opportunity')) {
+        answer = "Ahmed is always open to discussing exciting opportunities in AI orchestration, systems engineering, or backend development. Try the 'email' command to get in touch.";
+      } else if (question.includes('project') || question.includes('build')) {
+        answer = "Ahmed enjoys building high-scale backend systems, AI orchestration frameworks (like LangGraph), and low-level tools (like Agent-Redteam in Rust).";
+      } else if (question.includes('who') || question.includes('about')) {
+        answer = "Ahmed is an AI Architect & Software Engineer specializing in Autonomous Agent Orchestration and High-Scale Systems.";
+      }
+
+      const items: StreamItem[] = [
+        { render: (s, d) => <div className="mt-3 text-zinc-300 text-sm leading-relaxed">{s ? <TypewriterText text={answer} onComplete={d} /> : answer}</div> }
+      ];
+
+      return (
+        <div className="my-2 break-words">
+          <TaskRunner tools={["Analyzing intent...", "Querying vector knowledge base...", "Synthesizing response..."]}>
+            <StreamSequence items={items} stepState={sharedStep} offset={0} />
+            <MetricsFooter tokens={answer.length + 50} />
+          </TaskRunner>
+        </div>
+      );
+    }
+
     case '/help':
     case 'help': {
       const helpCmds = [
@@ -760,6 +820,7 @@ type HistoryItem = {
   type: 'input' | 'output' | 'system';
   content: string;
   command?: string;
+  overridePrefix?: string;
 };
 
 export default function App() {
@@ -771,6 +832,17 @@ export default function App() {
   const [isBooting, setIsBooting] = useState(true);
   const [sessionTokens, setSessionTokens] = useState(0);
   const [isTerminated, setIsTerminated] = useState(false);
+  const [emailState, setEmailState] = useState<{ step: 'subject' | 'body', subject: string } | null>(null);
+  const [cwd, setCwd] = useState('~/portfolio');
+  const [achievements, setAchievements] = useState<string[]>([]);
+  const [recentAchievement, setRecentAchievement] = useState<string | null>(null);
+
+  const unlockAchievement = (title: string) => {
+    if (achievements.includes(title)) return;
+    setAchievements(prev => [...prev, title]);
+    setRecentAchievement(title);
+    setTimeout(() => setRecentAchievement(null), 4000);
+  };
   
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -854,6 +926,59 @@ export default function App() {
       ]);
       return;
     }
+
+    const baseCmdLower = trimmedCmd.split(' ')[0].toLowerCase();
+    if (baseCmdLower === 'sudo') unlockAchievement('Sneaky Developer');
+    if (baseCmdLower === 'cat' && trimmedCmd.includes('.env') && cwd === '~/.config') unlockAchievement('API Key Hunter');
+    if (baseCmdLower === 'cat' && trimmedCmd.includes('id_rsa.pub') && cwd === '~/.ssh') unlockAchievement('Hackerman');
+    
+    if (trimmedCmd.toLowerCase() === 'email') {
+      setCommandHistory(prev => [...prev, trimmedCmd]);
+      setHistory(h => [
+        ...h, 
+        { id: Date.now().toString(), type: 'input', content: trimmedCmd },
+        { id: (Date.now()+1).toString(), type: 'system', content: 'Initializing secure mail transfer protocol...' }
+      ]);
+      setEmailState({ step: 'subject', subject: '' });
+      return;
+    }
+    const args = trimmedCmd.split(' ').filter(Boolean);
+    const baseCmd = args[0]?.toLowerCase() || '';
+    
+    if (baseCmd === 'cd') {
+      const target = args[1] || '~';
+      let newCwd = cwd;
+      let error = '';
+
+      if (target === '~') newCwd = '~';
+      else if (target === '..') {
+        const parts = cwd.split('/');
+        if (parts.length > 1) {
+          parts.pop();
+          newCwd = parts.join('/');
+          if (newCwd === '') newCwd = '/';
+        }
+      } else if (target === 'portfolio' && cwd === '~') {
+        newCwd = '~/portfolio';
+      } else if (target === '.config' && cwd === '~') {
+        newCwd = '~/.config';
+      } else if (target === '.ssh' && cwd === '~') {
+        newCwd = '~/.ssh';
+      } else if ((target === '/var/logs') || (target === 'logs' && cwd === '/var')) {
+        newCwd = '/var/logs';
+      } else {
+        error = `cd: ${target}: No such file or directory`;
+      }
+
+      setCommandHistory(prev => [...prev, trimmedCmd]);
+      setHistory(h => [
+        ...h, 
+        { id: Date.now().toString(), type: 'input', content: trimmedCmd },
+        ...(error ? [{ id: (Date.now()+1).toString(), type: 'output' as const, command: `echo ${error}`, content: '' }] : [])
+      ]);
+      if (!error) setCwd(newCwd);
+      return;
+    }
     
     if (trimmedCmd.toLowerCase() === 'clear' || trimmedCmd.toLowerCase() === '/clear') {
       setHistory([]);
@@ -883,15 +1008,35 @@ export default function App() {
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
+      if (emailState) {
+        if (emailState.step === 'subject') {
+          setHistory(h => [
+            ...h,
+            { id: Date.now().toString(), type: 'input', content: input, overridePrefix: 'Subject: ' }
+          ]);
+          setEmailState({ step: 'body', subject: input });
+          setInput('');
+        } else {
+          setHistory(h => [
+            ...h,
+            { id: Date.now().toString(), type: 'input', content: input, overridePrefix: 'Message: ' },
+            { id: (Date.now()+1).toString(), type: 'system', content: 'Opening mail client...' }
+          ]);
+          window.open(`mailto:ahmed.maaz.eid@gmail.com?subject=${encodeURIComponent(emailState.subject)}&body=${encodeURIComponent(input)}`);
+          setEmailState(null);
+          setInput('');
+        }
+        return;
+      }
       executeCommand(input);
-    } else if (e.key === 'ArrowUp') {
+    } else if (e.key === 'ArrowUp' && !emailState) {
       e.preventDefault();
       if (commandHistory.length > 0) {
         const newIndex = Math.min(historyIndex + 1, commandHistory.length - 1);
         setHistoryIndex(newIndex);
         setInput(commandHistory[commandHistory.length - 1 - newIndex]);
       }
-    } else if (e.key === 'ArrowDown') {
+    } else if (e.key === 'ArrowDown' && !emailState) {
       e.preventDefault();
       if (historyIndex > 0) {
         const newIndex = historyIndex - 1;
@@ -903,7 +1048,7 @@ export default function App() {
       }
     } else if (e.key === 'Tab') {
       e.preventDefault();
-      const cmds = ['whoami', 'experience', 'projects', 'skills', 'contact', 'neofetch', 'resume', 'history', 'fortune', 'help', 'clear', 'exit', 'quit'];
+      const cmds = ['whoami', 'experience', 'projects', 'skills', 'contact', 'neofetch', 'resume', 'history', 'fortune', 'help', 'clear', 'exit', 'quit', 'ask', 'email'];
       const match = cmds.find(c => c.startsWith(input.toLowerCase()));
       if (match) setInput(match);
     }
@@ -928,7 +1073,7 @@ export default function App() {
 
               {item.type === 'input' && (
                 <div className="flex items-center gap-2 mt-4 mb-2">
-                  <span className="text-claude font-bold text-sm leading-none">❯</span>
+                  <span className={item.overridePrefix ? "text-zinc-500 font-bold text-sm leading-none" : "text-claude font-bold text-sm leading-none"}>{item.overridePrefix || '❯'}</span>
                   <span className="text-zinc-100 text-sm leading-none">{item.content}</span>
                 </div>
               )}
@@ -936,9 +1081,11 @@ export default function App() {
               {item.type === 'output' && (
                 <div className="tui-fade-in">
                   {item.command === 'welcome' ? (
-                    <StartupBanner />
+                    <StartupBanner cwd={cwd} />
+                  ) : item.command?.startsWith('echo ') ? (
+                    <div className="text-red-400 text-sm mt-3">{item.command.replace('echo ', '')}</div>
                   ) : (
-                    <CommandOutput command={item.command!} onCommandClick={executeCommand} commandHistory={commandHistory} />
+                    <CommandOutput command={item.command!} onCommandClick={executeCommand} commandHistory={commandHistory} cwd={cwd} />
                   )}
                 </div>
               )}
@@ -952,7 +1099,9 @@ export default function App() {
           {!isBooting && !isProcessing && (
             <div className="flex flex-col mt-6 transition-opacity duration-200">
               <div className="flex items-center gap-2 relative">
-                <span className="text-claude text-sm font-bold leading-none">❯</span>
+                <span className={emailState ? "text-zinc-500 font-bold text-sm leading-none whitespace-pre" : "text-claude text-sm font-bold leading-none whitespace-pre"}>
+                  {emailState ? (emailState.step === 'subject' ? 'Subject: ' : 'Message: ') : '❯'}
+                </span>
                 <div className="relative flex-1 flex items-center">
                   <input
                     ref={inputRef}
@@ -966,7 +1115,9 @@ export default function App() {
                     autoFocus
                   />
                   {!input && (
-                    <span className="absolute left-0 text-zinc-600 text-sm pointer-events-none select-none">try 'whoami' or 'projects'...</span>
+                    <span className="absolute left-0 text-zinc-600 text-sm pointer-events-none select-none">
+                      {emailState ? (emailState.step === 'subject' ? '(e.g. Opportunity at Stripe)' : '(Press Enter to send via mail client)') : "try 'whoami' or 'projects'..."}
+                    </span>
                   )}
                   <div className="absolute left-0 top-0 pointer-events-none flex items-center h-full">
                     <span className="text-transparent whitespace-pre text-sm">{input}</span>
@@ -990,6 +1141,16 @@ export default function App() {
           <span className="sm:hidden">${(sessionTokens * 0.000015).toFixed(4)}</span>
         </div>
       </div>
+
+      {recentAchievement && (
+        <div className="fixed bottom-12 right-4 sm:bottom-10 sm:right-6 bg-zinc-800 border border-zinc-700 p-3 sm:p-4 rounded-lg shadow-2xl flex items-center gap-3 tui-fade-in z-50">
+          <div className="text-xl sm:text-2xl">🏆</div>
+          <div>
+            <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Achievement Unlocked</div>
+            <div className="text-zinc-200 text-xs sm:text-sm font-semibold">{recentAchievement}</div>
+          </div>
+        </div>
+      )}
     </div>
     </ScrollContext.Provider>
   );
