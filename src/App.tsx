@@ -524,13 +524,17 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
   }
 
   if (baseCmd === 'cat') {
-    const file = args[1];
+    let file = args[1];
+    if (file && file.length > 1 && file.endsWith('/')) file = file.slice(0, -1);
     let content = '';
     let action = `Read file ${file}`;
     let isError = false;
     let tokens = 10;
 
-    if (file === 'whoami.json' || file === 'whoami') {
+    if (['portfolio', '.config', '.ssh', 'var', 'logs', 'bin', 'etc', 'home', 'usr'].includes(file)) {
+      content = `cat: ${file}: Is a directory`;
+      isError = true;
+    } else if (file === 'whoami.json' || file === 'whoami') {
       content = JSON.stringify(PORTFOLIO_DATA.whoami, null, 2);
       action = 'Read file whoami.json';
       tokens = 100;
@@ -1056,8 +1060,25 @@ export default function App() {
     const baseCmd = args[0]?.toLowerCase() || '';
 
     if (baseCmd === 'vim') {
-      const file = args[1] || 'untitled.md';
+      let file = args[1] || 'untitled.md';
+      if (file.length > 1 && file.endsWith('/')) file = file.slice(0, -1);
+      
+      let error = '';
+      if (['portfolio', '.config', '.ssh', 'var', 'logs', 'bin', 'etc', 'home', 'usr'].includes(file)) {
+        error = `vim: ${file}: Is a directory`;
+      }
+
       setCommandHistory(prev => [...prev, trimmedCmd]);
+      
+      if (error) {
+        setHistory(h => [
+          ...h, 
+          { id: Date.now().toString(), type: 'input', content: trimmedCmd },
+          { id: (Date.now()+1).toString(), type: 'output', command: `echo ${error}`, content: '', cwd }
+        ]);
+        return;
+      }
+
       setHistory(h => [
         ...h, 
         { id: Date.now().toString(), type: 'input', content: trimmedCmd },
@@ -1079,7 +1100,8 @@ export default function App() {
     }
     
     if (baseCmd === 'cd') {
-      const target = args[1] || '~';
+      let target = args[1] || '~';
+      if (target.length > 1 && target.endsWith('/')) target = target.slice(0, -1);
       let newCwd = cwd;
       let error = '';
 
