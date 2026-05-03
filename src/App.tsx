@@ -1222,7 +1222,7 @@ export default function App() {
               {item.type === 'output' && (
                 <div className="tui-fade-in">
                   {item.command === 'welcome' ? (
-                    <StartupBanner cwd={item.cwd || cwd} />
+                    <StartupBanner cwd={cwd} />
                   ) : item.command?.startsWith('echo ') ? (
                     <div className="text-red-400 text-sm mt-3">{item.command.replace('echo ', '')}</div>
                   ) : (
