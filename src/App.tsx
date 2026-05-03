@@ -1038,8 +1038,8 @@ export default function App() {
       ]);
       setTimeout(() => {
         setGuiState('booting');
-        setTimeout(() => setGuiState('gui'), 800);
-      }, 1500);
+        setTimeout(() => setGuiState('gui'), 400);
+      }, 600);
       return;
     }
     

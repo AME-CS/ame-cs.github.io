@@ -410,15 +410,30 @@ export const GuiView = ({ onClose }: { onClose: () => void }) => {
                     animation: gui-fadeIn 0.6s ease forwards;
                 }
 
+                .gui-container .close-gui-btn {
+                    position: fixed;
+                    top: 1.5rem;
+                    right: 1.5rem;
+                    z-index: 1000;
+                }
+
                 @media (max-width: 768px) {
                     .gui-container .section-title { font-size: 2rem; }
                     .gui-container .inner-container { padding: 1.5rem; }
                     .gui-container .tweaks { display: none; }
+                    .gui-container .close-gui-btn {
+                        top: auto;
+                        bottom: 1.5rem;
+                        right: 1.5rem;
+                    }
+                    .gui-container .nav-pills {
+                        flex-wrap: wrap;
+                    }
                 }
             `}</style>
             
             <div className="inner-container">
-                <div style={{ position: 'fixed', top: '1.5rem', right: '1.5rem', zIndex: 1000 }}>
+                <div className="close-gui-btn">
                     <button 
                         onClick={onClose} 
                         className="pill" 
