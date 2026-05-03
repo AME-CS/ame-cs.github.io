@@ -882,7 +882,7 @@ type HistoryItem = {
 };
 
 const VimEditor = ({ filename, onExit }: { filename: string, onExit: () => void }) => {
-  const [content, setContent] = useState(() => {
+  const [content] = useState(() => {
     if (filename === 'experience.md') return "# Experience\n\n- Visa Inc. | AI Platform\n- VIZIO Inc. | Embedded SWE";
     return "";
   });
