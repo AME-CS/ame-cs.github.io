@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, type KeyboardEvent } from 'react';
 import { PORTFOLIO_DATA, resolvePath } from './vfs';
+import { GuiView } from './GuiView';
 
 // ----------------------------------------------------------------------
 // DATA
@@ -885,7 +886,7 @@ export default function App() {
   const [emailState, setEmailState] = useState<{ step: 'subject' | 'body', subject: string } | null>(null);
   const [cwd, setCwd] = useState('~/portfolio');
   const [vimFile, setVimFile] = useState<string | null>(null);
-  const [isGuiMode, setIsGuiMode] = useState(false);
+  const [guiState, setGuiState] = useState<'terminal' | 'booting' | 'gui'>('terminal');
   const [achievements, setAchievements] = useState<string[]>([]);
   const [recentAchievement, setRecentAchievement] = useState<string | null>(null);
 
@@ -1035,7 +1036,10 @@ export default function App() {
         { id: Date.now().toString(), type: 'input', content: trimmedCmd, cwd },
         { id: (Date.now()+1).toString(), type: 'output', command: trimmedCmd, content: '', cwd }
       ]);
-      setTimeout(() => setIsGuiMode(true), 2000);
+      setTimeout(() => {
+        setGuiState('booting');
+        setTimeout(() => setGuiState('gui'), 2500);
+      }, 2000);
       return;
     }
     
@@ -1184,17 +1188,23 @@ export default function App() {
 
       {vimFile && <VimEditor filename={vimFile} onExit={() => setVimFile(null)} />}
       
-      {isGuiMode && (
+      {guiState === 'booting' && (
         <div className="fixed inset-0 bg-zinc-950 z-[1000] flex flex-col items-center justify-center p-6 text-center">
           <div className="w-16 h-16 border-2 border-claude border-t-transparent rounded-full animate-spin mb-6" />
           <h2 className="text-xl font-bold text-zinc-100 mb-2">Booting Legacy GUI...</h2>
           <p className="text-zinc-400 max-w-md">The modern terminal interface is currently being bridged to the 2D document-based viewport.</p>
           <button 
-            onClick={() => setIsGuiMode(false)}
+            onClick={() => setGuiState('terminal')}
             className="mt-8 px-6 py-2 bg-claude text-zinc-950 font-bold rounded hover:bg-claude/90 transition-colors"
           >
             Abort & Return to Terminal
           </button>
+        </div>
+      )}
+
+      {guiState === 'gui' && (
+        <div className="fixed inset-0 z-[1000] overflow-y-auto bg-zinc-50">
+          <GuiView onClose={() => setGuiState('terminal')} />
         </div>
       )}
 
