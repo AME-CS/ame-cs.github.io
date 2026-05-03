@@ -886,7 +886,7 @@ export default function App() {
   const [emailState, setEmailState] = useState<{ step: 'subject' | 'body', subject: string } | null>(null);
   const [cwd, setCwd] = useState('~/portfolio');
   const [vimFile, setVimFile] = useState<string | null>(null);
-  const [guiState, setGuiState] = useState<'terminal' | 'booting' | 'gui'>('terminal');
+  const [guiState, setGuiState] = useState<'terminal' | 'booting' | 'gui'>('gui');
   const [achievements, setAchievements] = useState<string[]>([]);
   const [recentAchievement, setRecentAchievement] = useState<string | null>(null);
 
