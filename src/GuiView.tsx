@@ -14,11 +14,11 @@ const Terminal = () => {
     const [charIndex, setCharIndex] = useState(0);
 
     const sequence = [
-        { type: 'input', text: 'claude-code --whoami' },
+        { type: 'input', text: 'ame-code --whoami' },
         { type: 'output', text: 'Initializing Ahmed Eid Portfolio Engine v2.0...' },
         { type: 'output', text: 'Role: AI Architect & Software Engineer' },
         { type: 'output', text: 'Status: Ready for orchestration.' },
-        { type: 'input', text: 'claude-code --summary' },
+        { type: 'input', text: 'ame-code --summary' },
         { type: 'output', text: 'AI Architect specializing in autonomous agent orchestration and Tier-0 payment systems ($500M+ annually).' }
     ];
 
@@ -467,7 +467,7 @@ export const GuiView = ({ onClose }: { onClose: () => void }) => {
                             </p>
                         </div>
                         <div className="mono" style={{ fontSize: '0.75rem', textAlign: 'right', color: 'var(--gui-accent)', opacity: 0.8, display: 'none' }}>
-                            [OS: CLAUDE_ENV]<br/>
+                            [OS: AME_ENV]<br/>
                             [STATUS: ACTIVE]
                         </div>
                     </div>
