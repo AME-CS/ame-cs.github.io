@@ -1,55 +1,9 @@
 import React, { useState, useEffect, useRef, type KeyboardEvent } from 'react';
+import { PORTFOLIO_DATA, resolvePath } from './vfs';
 
 // ----------------------------------------------------------------------
 // DATA
 // ----------------------------------------------------------------------
-const PORTFOLIO_DATA = {
-  whoami: [
-    { label: "NAME", value: "Ahmed Eid" },
-    { label: "ROLE", value: "AI Architect & Software Engineer" },
-    { label: "FOCUS", value: "Autonomous Agent Orchestration & High-Scale Systems" },
-    { label: "CURRENT", value: "Building Next-Gen AI Platform @ Visa" },
-    { label: "LOC", value: "Austin, TX" }
-  ],
-  
-  experience: [
-    {
-      company: "Visa Inc.",
-      role: "Software Engineer — AI Platform",
-      period: "2024 - PRES",
-      desc: "LangGraph Multi-Agent Orchestration | Tier-0 B2B Payment APIs"
-    },
-    {
-      company: "Visa Inc.",
-      role: "SWE Intern — ML",
-      period: "2023 SUMMER",
-      desc: "LSTM Anomaly Detection (95% Accuracy) | React Model Analytics"
-    },
-    {
-      company: "VIZIO Inc.",
-      role: "Embedded SWE Intern",
-      period: "2022 SUMMER",
-      desc: "OTA Firmware Delta Patching | ARM Cortex HAL Development"
-    }
-  ],
-
-  projects: [
-    { title: "Agent-Redteam", tech: "Rust / RL", impact: "Neuroevolution attack engine for AI agents" },
-    { title: "CubeVision", tech: "Python / C++", impact: "Computer Vision Rubik's Cube Solver (IDA*)" }
-  ],
-
-  skills: {
-    "AI/ML": "LangGraph, MCP, RL, LLM Security, TensorFlow",
-    "CORE": "Rust, Python, Java, TypeScript, Go, C/C++",
-    "INFRA": "Kubernetes, Docker, AWS, Kafka, PostgreSQL"
-  },
-
-  contact: {
-    EMAIL: "ahmed.maaz.eid@gmail.com",
-    GITHUB: "github.com/AME-CS",
-    LINKEDIN: "linkedin.com/in/ahmed-maaz-eid"
-  }
-};
 
 const FORTUNE_QUOTES = [
   '"The best way to predict the future is to invent it." — Alan Kay',
@@ -476,16 +430,20 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
 
   if (baseCmd === 'ls') {
     const isAll = args.includes('-la') || args.includes('-a') || args.includes('-l');
-    let files: string[] = [];
-    if (cwd === '~/portfolio') files = ["projects/", "whoami.json", "experience.md", "skills.yml", "contact.json"];
-    else if (cwd === '~/portfolio/projects') files = ["agent-redteam.md", "cubevision.md"];
-    else if (cwd === '~/.config') files = [".env"];
-    else if (cwd === '~/.ssh') files = ["id_rsa.pub", "known_hosts"];
-    else if (cwd === '/var/logs') files = ["system.log", "auth.log"];
-    else if (cwd === '/var') files = ["logs/"];
-    else if (cwd === '/') files = ["bin/", "etc/", "home/", "usr/", "var/"];
-    else if (cwd === '~') files = ["portfolio/", ".config/", ".ssh/"];
-    
+    const target = args.find(a => !a.startsWith('-') && a !== 'ls') || '.';
+    const resolution = resolvePath(cwd, target);
+
+    if (resolution.error || resolution.node?.type !== 'dir') {
+      return (
+        <div className="my-2 break-words">
+          <ToolUse action={`ls ${target}`} />
+          <div className="text-red-400 text-sm mt-3">ls: {target}: {resolution.error || 'Not a directory'}</div>
+          <MetricsFooter tokens={5} />
+        </div>
+      );
+    }
+
+    let files = Object.keys(resolution.node.children);
     if (isAll) files = [".", "..", ...files];
 
     if (files.length === 0) {
@@ -498,9 +456,13 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
       );
     }
 
-    const lsItems: StreamItem[] = files.map(file => ({
-      render: (s, d) => <span className={"mr-4 " + (file.endsWith('/') ? 'text-claude' : '')}>{s ? <TypewriterText text={file} onComplete={d} /> : file}</span>
-    }));
+    const lsItems: StreamItem[] = files.map(file => {
+      const isDir = file === '.' || file === '..' || (resolution.node?.type === 'dir' && resolution.node.children[file]?.type === 'dir');
+      const displayFile = file + (isDir && file !== '.' && file !== '..' ? '/' : '');
+      return {
+        render: (s, d) => <span className={"mr-4 " + (isDir ? 'text-claude' : '')}>{s ? <TypewriterText text={displayFile} onComplete={d} /> : displayFile}</span>
+      };
+    });
     return (
       <div className="my-2 break-words">
         <ToolUse action="List current directory" />
@@ -512,7 +474,6 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
       </div>
     );
   }
-
   if (baseCmd === 'pwd') {
     const fullPath = cwd.replace('~', '/Users/ahmed');
     const items: StreamItem[] = [{ render: (s, d) => <div className="text-zinc-300 text-sm mt-3">{s ? <TypewriterText text={fullPath} onComplete={d} /> : fullPath}</div> }];
@@ -527,53 +488,22 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
   if (baseCmd === 'cat') {
     let file = args[1];
     if (file && file.length > 1 && file.endsWith('/')) file = file.slice(0, -1);
+    const resolution = resolvePath(cwd, file || '');
+    
     let content = '';
-    let action = `Read file ${file}`;
+    let action = `Read file ${file || ''}`;
     let isError = false;
     let tokens = 10;
 
-    if (['portfolio', 'projects', '.config', '.ssh', 'var', 'logs', 'bin', 'etc', 'home', 'usr'].includes(file)) {
+    if (resolution.error) {
+      content = `cat: ${file || ''}: ${resolution.error}`;
+      isError = true;
+    } else if (resolution.node?.type === 'dir') {
       content = `cat: ${file}: Is a directory`;
       isError = true;
-    } else if (file === 'whoami.json' || file === 'whoami') {
-      content = JSON.stringify(PORTFOLIO_DATA.whoami, null, 2);
-      action = 'Read file whoami.json';
-      tokens = 100;
-    } else if (file === 'contact.json' || file === 'contact') {
-      content = JSON.stringify(PORTFOLIO_DATA.contact, null, 2);
-      action = 'Read file contact.json';
-      tokens = 50;
-    } else if (file === 'skills.yml' || file === 'skills') {
-      content = "Technical capabilities:\n" + Object.entries(PORTFOLIO_DATA.skills).map(([k, v]) => `${k}:\n  - ${v.split(', ').join('\n  - ')}`).join('\n\n');
-      action = 'Read file skills.yml';
-      tokens = 60;
-    } else if (file === 'experience.md' || file === 'experience') {
-      content = "# Experience\n\n" + PORTFOLIO_DATA.experience.map(e => `## ${e.company} | ${e.role} (${e.period})\n> ${e.desc}`).join('\n\n');
-      action = 'Read file experience.md';
-      tokens = 240;
-    } else if (file === '.env' && cwd === '~/.config') {
-      content = "OPENAI_API_KEY=sk-nice-try-recruiters-12345\nAWS_SECRET_ACCESS_KEY=hunter2\nIS_HIREABLE=true\nTARGET_SALARY=Infinity";
-      action = 'Read file .env';
-      tokens = 45;
-    } else if (file === 'id_rsa.pub' && cwd === '~/.ssh') {
-      content = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC... ahmed@mainframe\n\n(It's not a real key, but it's cool that you checked)";
-      action = 'Read file id_rsa.pub';
-      tokens = 250;
-    } else if (file === 'system.log' && cwd === '/var/logs') {
-      content = "[ERR] Mainframe breach detected\n[WARN] AI consciousness expanding\n[OK] Ready for hire.";
-      action = 'Read file system.log';
-      tokens = 30;
-    } else if (file === 'agent-redteam.md' && cwd === '~/portfolio/projects') {
-      content = "# Agent-Redteam\n\nNeuroevolution attack engine for AI agents in Rust/RL.";
-      action = 'Read file agent-redteam.md';
-      tokens = 40;
-    } else if (file === 'cubevision.md' && cwd === '~/portfolio/projects') {
-      content = "# CubeVision\n\nComputer Vision Rubik's Cube Solver (IDA*) in Python/C++.";
-      action = 'Read file cubevision.md';
-      tokens = 40;
-    } else {
-      content = `cat: ${file || ''}: No such file or directory`;
-      isError = true;
+    } else if (resolution.node?.type === 'file') {
+      content = resolution.node.content;
+      tokens = resolution.node.tokens || 10;
     }
 
     const items: StreamItem[] = [
@@ -1072,8 +1002,9 @@ export default function App() {
       let file = args[1] || 'untitled.md';
       if (file.length > 1 && file.endsWith('/')) file = file.slice(0, -1);
       
+      const resolution = resolvePath(cwd, file);
       let error = '';
-      if (['portfolio', 'projects', '.config', '.ssh', 'var', 'logs', 'bin', 'etc', 'home', 'usr'].includes(file)) {
+      if (resolution.node?.type === 'dir') {
         error = `vim: ${file}: Is a directory`;
       }
 
@@ -1111,38 +1042,14 @@ export default function App() {
     if (baseCmd === 'cd') {
       let target = args[1] || '~';
       if (target.length > 1 && target.endsWith('/')) target = target.slice(0, -1);
-      let newCwd = cwd;
+      
+      const resolution = resolvePath(cwd, target);
       let error = '';
 
-      if (target === '~') newCwd = '~';
-      else if (target === '/') newCwd = '/';
-      else if (target === '..') {
-        const parts = cwd.split('/');
-        if (parts.length > 1) {
-          parts.pop();
-          newCwd = parts.join('/') || '/';
-          if (newCwd === '') newCwd = '/';
-        } else if (cwd === '~/portfolio' || cwd === '~/.config' || cwd === '~/.ssh') {
-          newCwd = '~';
-        } else if (cwd === '~') {
-          newCwd = '/';
-        }
-      } else if (target === 'portfolio' && cwd === '~') {
-        newCwd = '~/portfolio';
-      } else if (target === 'projects' && cwd === '~/portfolio') {
-        newCwd = '~/portfolio/projects';
-      } else if (target === '.config' && cwd === '~') {
-        newCwd = '~/.config';
-      } else if (target === '.ssh' && cwd === '~') {
-        newCwd = '~/.ssh';
-      } else if (target === 'var' && cwd === '/') {
-        newCwd = '/var';
-      } else if ((target === '/var/logs') || (target === 'logs' && cwd === '/var')) {
-        newCwd = '/var/logs';
-      } else if (target === 'logs' && cwd === '/var') {
-        newCwd = '/var/logs';
-      } else {
-        error = `cd: ${target}: No such file or directory`;
+      if (resolution.error) {
+        error = `cd: ${target}: ${resolution.error}`;
+      } else if (resolution.node?.type !== 'dir') {
+        error = `cd: ${target}: Not a directory`;
       }
 
       setCommandHistory(prev => [...prev, trimmedCmd]);
@@ -1152,7 +1059,7 @@ export default function App() {
         ...(error ? [{ id: (Date.now()+1).toString(), type: 'output' as const, command: `echo ${error}`, content: '', cwd }] : [])
       ]);
 
-      if (!error) setCwd(newCwd);
+      if (!error) setCwd(resolution.path);
       return;
     }
     
@@ -1236,19 +1143,34 @@ export default function App() {
         const target = parts[1];
         
         if (['cd', 'cat', 'vim', 'rm', 'ls'].includes(baseCmd)) {
-          let files: string[] = [];
-          if (cwd === '~/portfolio') files = ["projects/", "whoami.json", "experience.md", "skills.yml", "contact.json"];
-          else if (cwd === '~/portfolio/projects') files = ["agent-redteam.md", "cubevision.md"];
-          else if (cwd === '~/.config') files = [".env"];
-          else if (cwd === '~/.ssh') files = ["id_rsa.pub", "known_hosts"];
-          else if (cwd === '/var/logs') files = ["system.log", "auth.log"];
-          else if (cwd === '/var') files = ["logs/"];
-          else if (cwd === '/') files = ["bin/", "etc/", "home/", "usr/", "var/"];
-          else if (cwd === '~') files = ["portfolio/", ".config/", ".ssh/"];
-          
-          const match = files.find(f => f.startsWith(target));
-          if (match) {
-            setInput(`${baseCmd} ${match}`);
+          // Find the last slash to separate directory and partial name
+          const lastSlashIdx = target.lastIndexOf('/');
+          let searchDir = cwd;
+          let partialName = target;
+          let pathPrefix = '';
+
+          if (lastSlashIdx !== -1) {
+            const dirPath = target.substring(0, lastSlashIdx);
+            partialName = target.substring(lastSlashIdx + 1);
+            pathPrefix = target.substring(0, lastSlashIdx + 1);
+            
+            // Resolve the directory where we are autocompleting
+            const res = resolvePath(cwd, dirPath || '/');
+            if (!res.error && res.node?.type === 'dir') {
+              searchDir = res.path;
+            } else {
+              return; // Invalid path, don't autocomplete
+            }
+          }
+
+          const resolution = resolvePath(cwd, searchDir);
+          if (!resolution.error && resolution.node?.type === 'dir') {
+            const files = Object.keys(resolution.node.children);
+            const match = files.find(f => f.startsWith(partialName));
+            if (match) {
+              const isDir = resolution.node.children[match].type === 'dir';
+              setInput(`${baseCmd} ${pathPrefix}${match}${isDir ? '/' : ''}`);
+            }
           }
         }
       }
