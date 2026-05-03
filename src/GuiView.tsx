@@ -81,31 +81,9 @@ const Terminal = () => {
     );
 };
 
-const Tweaks = ({ config, setConfig }: { config: any, setConfig: any }) => {
-    return (
-        <div className="tweaks">
-            <div className="tweaks-title">
-                <span>𐕣 Appearance</span>
-                <span style={{ opacity: 0.3 }}>v1.0</span>
-            </div>
-            <div className="tweak-row">
-                <span>Terminal</span>
-                <input type="checkbox" checked={config.showTerminal} onChange={e => setConfig({...config, showTerminal: e.target.checked})} />
-            </div>
-            <div className="tweak-row">
-                <span>Dark Mode</span>
-                <input type="checkbox" checked={config.darkMode} onChange={e => setConfig({...config, darkMode: e.target.checked})} />
-            </div>
-            <div className="tweak-row">
-                <span>Size</span>
-                <input type="range" min="14" max="20" value={config.fontSize} onChange={e => setConfig({...config, fontSize: parseInt(e.target.value)})} />
-            </div>
-        </div>
-    );
-};
 
 export const GuiView = ({ onClose }: { onClose: () => void }) => {
-    const [config, setConfig] = useState(TWEAK_DEFAULTS);
+    const [config] = useState(TWEAK_DEFAULTS);
     const [activeSection, setActiveSection] = useState('hero');
 
     const cssVariables = {
@@ -579,7 +557,6 @@ export const GuiView = ({ onClose }: { onClose: () => void }) => {
                 </div>
             </div>
 
-            <Tweaks config={config} setConfig={setConfig} />
         </div>
     );
 };
