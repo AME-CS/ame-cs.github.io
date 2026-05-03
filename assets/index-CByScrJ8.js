@@ -327,8 +327,10 @@ TARGET_SALARY=Infinity`,tokens:45}}},".ssh":{type:`dir`,children:{"id_rsa.pub":{
                     .gui-container .tweaks { display: none; }
                     .gui-container .close-gui-btn {
                         top: auto;
-                        bottom: 1.5rem;
-                        right: 1.5rem;
+                        bottom: 4.5rem;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        right: auto;
                     }
                     .gui-container .nav-pills {
                         flex-wrap: wrap;
