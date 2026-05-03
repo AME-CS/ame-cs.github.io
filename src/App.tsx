@@ -478,6 +478,7 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
     const isAll = args.includes('-la') || args.includes('-a') || args.includes('-l');
     let files: string[] = [];
     if (cwd === '~/portfolio') files = ["projects/", "whoami.json", "experience.md", "skills.yml", "contact.json"];
+    else if (cwd === '~/portfolio/projects') files = ["agent-redteam.md", "cubevision.md"];
     else if (cwd === '~/.config') files = [".env"];
     else if (cwd === '~/.ssh') files = ["id_rsa.pub", "known_hosts"];
     else if (cwd === '/var/logs') files = ["system.log", "auth.log"];
@@ -531,7 +532,7 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
     let isError = false;
     let tokens = 10;
 
-    if (['portfolio', '.config', '.ssh', 'var', 'logs', 'bin', 'etc', 'home', 'usr'].includes(file)) {
+    if (['portfolio', 'projects', '.config', '.ssh', 'var', 'logs', 'bin', 'etc', 'home', 'usr'].includes(file)) {
       content = `cat: ${file}: Is a directory`;
       isError = true;
     } else if (file === 'whoami.json' || file === 'whoami') {
@@ -562,6 +563,14 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
       content = "[ERR] Mainframe breach detected\n[WARN] AI consciousness expanding\n[OK] Ready for hire.";
       action = 'Read file system.log';
       tokens = 30;
+    } else if (file === 'agent-redteam.md' && cwd === '~/portfolio/projects') {
+      content = "# Agent-Redteam\n\nNeuroevolution attack engine for AI agents in Rust/RL.";
+      action = 'Read file agent-redteam.md';
+      tokens = 40;
+    } else if (file === 'cubevision.md' && cwd === '~/portfolio/projects') {
+      content = "# CubeVision\n\nComputer Vision Rubik's Cube Solver (IDA*) in Python/C++.";
+      action = 'Read file cubevision.md';
+      tokens = 40;
     } else {
       content = `cat: ${file || ''}: No such file or directory`;
       isError = true;
@@ -1064,7 +1073,7 @@ export default function App() {
       if (file.length > 1 && file.endsWith('/')) file = file.slice(0, -1);
       
       let error = '';
-      if (['portfolio', '.config', '.ssh', 'var', 'logs', 'bin', 'etc', 'home', 'usr'].includes(file)) {
+      if (['portfolio', 'projects', '.config', '.ssh', 'var', 'logs', 'bin', 'etc', 'home', 'usr'].includes(file)) {
         error = `vim: ${file}: Is a directory`;
       }
 
@@ -1120,6 +1129,8 @@ export default function App() {
         }
       } else if (target === 'portfolio' && cwd === '~') {
         newCwd = '~/portfolio';
+      } else if (target === 'projects' && cwd === '~/portfolio') {
+        newCwd = '~/portfolio/projects';
       } else if (target === '.config' && cwd === '~') {
         newCwd = '~/.config';
       } else if (target === '.ssh' && cwd === '~') {
@@ -1227,6 +1238,7 @@ export default function App() {
         if (['cd', 'cat', 'vim', 'rm', 'ls'].includes(baseCmd)) {
           let files: string[] = [];
           if (cwd === '~/portfolio') files = ["projects/", "whoami.json", "experience.md", "skills.yml", "contact.json"];
+          else if (cwd === '~/portfolio/projects') files = ["agent-redteam.md", "cubevision.md"];
           else if (cwd === '~/.config') files = [".env"];
           else if (cwd === '~/.ssh') files = ["id_rsa.pub", "known_hosts"];
           else if (cwd === '/var/logs') files = ["system.log", "auth.log"];
