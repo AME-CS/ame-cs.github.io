@@ -429,7 +429,18 @@ export const GuiView = ({ onClose }: { onClose: () => void }) => {
                         right: auto;
                     }
                     .gui-container .nav-pills {
-                        flex-wrap: wrap;
+                        flex-wrap: nowrap;
+                        justify-content: flex-start;
+                        overflow-x: auto;
+                        padding-bottom: 0.5rem;
+                        scrollbar-width: none;
+                    }
+                    .gui-container .nav-pills::-webkit-scrollbar {
+                        display: none;
+                    }
+                    .gui-container .pill {
+                        white-space: nowrap;
+                        flex-shrink: 0;
                     }
                 }
             `}</style>
