@@ -72,7 +72,17 @@ const FORTUNE_QUOTES = [
   '"A language that doesn\'t affect the way you think about programming is not worth knowing." — Alan Perlis',
   '"Measuring programming progress by lines of code is like measuring airplane building progress by weight." — Bill Gates',
   '"Sometimes it pays to stay in bed on Monday, rather than spending the rest of the week debugging Monday\'s code." — Dan Salomon',
-  '"The question of whether machines can think is about as relevant as the question of whether submarines can swim." — Edsger W. Dijkstra'
+  '"The question of whether machines can think is about as relevant as the question of whether submarines can swim." — Edsger Esk Dijkstra'
+];
+
+const ASK_DATA = [
+  { keywords: ["language", "tech", "stack", "favorite"], response: "Ahmed's favorite stack right now is Rust for systems and TypeScript for the frontend. He's also deep into Python for AI/ML orchestration." },
+  { keywords: ["relocation", "move", "location"], response: "Ahmed is currently based in Austin, TX, but open to relocation for exceptional opportunities." },
+  { keywords: ["salary", "compensation", "money"], response: "Ahmed is looking for competitive compensation that reflects his expertise in AI Platform engineering and multi-agent orchestration." },
+  { keywords: ["hire", "available", "job"], response: "Yes! Ahmed is open to new challenges, specifically roles involving Agentic AI and high-scale infrastructure." },
+  { keywords: ["background", "education", "degree"], response: "Ahmed is a Software Engineer at Visa with a focus on AI Platforms. He has a track record of building tier-0 B2B systems and ML models." },
+  { keywords: ["agent", "ai", "mcp", "langgraph"], response: "Ahmed is an expert in multi-agent orchestration, using tools like LangGraph and MCP (Model Context Protocol) to build autonomous systems." },
+  { keywords: ["github", "code"], response: "You can check out his work at github.com/AME-CS. He's particularly proud of his Agent-Redteam engine." }
 ];
 
 const NEOFETCH_LOGO = `
@@ -217,7 +227,7 @@ const MetricsFooter = ({ tokens }: { tokens: number }) => {
   );
 };
 
-const VALID_COMMANDS = ['whoami', 'experience', 'projects', 'skills', 'contact', 'neofetch', 'resume', 'history', 'fortune', 'help', 'clear', 'exit', 'quit', 'ask', 'email', 'ls', 'cd', 'pwd', 'cat', 'sudo', 'rm'];
+const VALID_COMMANDS = ['whoami', 'experience', 'projects', 'skills', 'contact', 'neofetch', 'resume', 'history', 'fortune', 'help', 'clear', 'exit', 'quit', 'ask', 'email', 'ls', 'cd', 'pwd', 'cat', 'sudo', 'rm', 'gui', 'vim', 'matrix', 'hack'];
 
 const getLevenshteinDistance = (a: string, b: string) => {
   const matrix = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
@@ -397,14 +407,86 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
     );
   }
 
+  if (baseCmd === 'ask') {
+    const query = args.slice(1).join(' ').toLowerCase();
+    let response = "I'm not sure about that. Try asking about my tech stack, relocation, or GitHub.";
+    
+    if (!query) {
+      response = "Ask me anything! E.g., 'ask what is your favorite language?'";
+    } else {
+      const match = ASK_DATA.find(d => d.keywords.some(k => query.includes(k)));
+      if (match) response = match.response;
+    }
+
+    const items: StreamItem[] = [{ render: (s, d) => <div className="text-zinc-300 text-sm mt-3 leading-relaxed">{s ? <TypewriterText text={response} onComplete={d} /> : response}</div> }];
+    return (
+      <div className="my-2 break-words">
+        <TaskRunner tools={["Analyzing query intent...", "Querying personal knowledge graph...", "Synthesizing response..."]}>
+          {isVerbose && <VerboseLogs />}
+          <StreamSequence items={items} stepState={sharedStep} offset={0} />
+          <MetricsFooter tokens={response.length / 4 + 40} />
+        </TaskRunner>
+      </div>
+    );
+  }
+
+  if (baseCmd === 'gui') {
+    const items: StreamItem[] = [{ render: (s, d) => <div className="text-claude text-sm mt-3 font-bold">{s ? <TypewriterText text="Booting GUI Mode... Redirecting to legacy interface..." onComplete={d} /> : "Booting GUI Mode... Redirecting to legacy interface..."}</div> }];
+    return (
+      <div className="my-2 break-words">
+        <TaskRunner tools={["Stopping terminal engine...", "Initializing WebGL context...", "Loading stylesheet assets..."]}>
+          <StreamSequence items={items} stepState={sharedStep} offset={0} />
+        </TaskRunner>
+      </div>
+    );
+  }
+
+  if (baseCmd === 'vim') {
+    const items: StreamItem[] = [{ render: (s, d) => <div className="text-zinc-300 text-sm mt-3 font-mono">{s ? <TypewriterText text="[VIM] Entering editor mode... Type ':q' to exit (good luck)." onComplete={d} /> : "[VIM] Entering editor mode... Type ':q' to exit (good luck)."}</div> }];
+    return (
+      <div className="my-2 break-words">
+        <TaskRunner tools={["Spawning VIM process...", "Capturing TTY..."]}>
+          <StreamSequence items={items} stepState={sharedStep} offset={0} />
+        </TaskRunner>
+      </div>
+    );
+  }
+
+  if (baseCmd === 'matrix') {
+    const items: StreamItem[] = [{ render: (s, d) => <div className="text-green-500 font-mono text-xs mt-3 h-40 overflow-hidden leading-tight">{s ? <TypewriterText text={"01010101\n10101010\n01101101\n10010010\n01010101\n11110000\n00001111\n10101010".repeat(10)} delay={1} onComplete={d} /> : "Wake up, Neo..."}</div> }];
+    return (
+      <div className="my-2 break-words">
+        <TaskRunner tools={["Jacking into the Gibson...", "Overriding display buffer...", "Initializing digital rain..."]}>
+          <StreamSequence items={items} stepState={sharedStep} offset={0} />
+        </TaskRunner>
+      </div>
+    );
+  }
+
+  if (baseCmd === 'hack') {
+    const items: StreamItem[] = [{ render: (s, d) => <div className="text-red-500 font-mono text-sm mt-3">{s ? <TypewriterText text="[CRITICAL] BRUTE FORCE ATTACK IN PROGRESS...\n[INFO] TARGET: MAINFRAME_CENTRAL\n[WARN] FIREWALL DETECTED: 80%\n[INFO] INJECTING EXPLOIT...\n[OK] ACCESS GRANTED TO AHMED'S SECRET PROJECTS." delay={20} onComplete={d} /> : "Hacking..."}</div> }];
+    return (
+      <div className="my-2 break-words">
+        <TaskRunner tools={["Enumerating vulnerabilities...", "Executing kernel exploit...", "Bypassing biometric auth..."]}>
+          <StreamSequence items={items} stepState={sharedStep} offset={0} />
+        </TaskRunner>
+      </div>
+    );
+  }
+
   if (baseCmd === 'ls') {
+    const isAll = args.includes('-la') || args.includes('-a') || args.includes('-l');
     let files: string[] = [];
     if (cwd === '~/portfolio') files = ["projects/", "whoami.json", "experience.md", "skills.yml", "contact.json"];
     else if (cwd === '~/.config') files = [".env"];
     else if (cwd === '~/.ssh') files = ["id_rsa.pub", "known_hosts"];
     else if (cwd === '/var/logs') files = ["system.log", "auth.log"];
+    else if (cwd === '/var') files = ["logs/"];
+    else if (cwd === '/') files = ["bin/", "etc/", "home/", "usr/", "var/"];
     else if (cwd === '~') files = ["portfolio/", ".config/", ".ssh/"];
     
+    if (isAll) files = [".", "..", ...files];
+
     if (files.length === 0) {
       return (
         <div className="my-2 break-words">
@@ -510,7 +592,7 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
       ];
       return (
         <div className="my-2 break-words">
-          <TaskRunner tools={["List directory ./", "Read file whoami.json"]}>
+          <TaskRunner tools={["Accessing identity matrix...", "Decrypting profile shards...", "Formatting biographical metadata..."]}>
             {isVerbose && <VerboseLogs />}
             <StreamSequence items={[items[0]]} stepState={sharedStep} offset={0} />
             <div className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-y-2">
@@ -531,7 +613,7 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
       ]);
       return (
         <div className="my-2 break-words">
-          <TaskRunner tools={["Querying HR API...", "Extracting professional timeline...", "Formatting responsibilities..."]}>
+          <TaskRunner tools={["Scanning professional history...", "Verifying employment records...", "Extracting technical impact..."]}>
             {isVerbose && <VerboseLogs />}
             <StreamSequence items={items} stepState={sharedStep} offset={0} />
             <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.experience).length / 4) + 20} />
@@ -547,7 +629,7 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
       ]);
       return (
         <div className="my-2 break-words">
-          <TaskRunner tools={["Searching vector database for projects...", "Reranking by relevance...", "Synthesizing architectural summaries..."]}>
+          <TaskRunner tools={["Searching vector search across project repositories...", "Analyzing GitHub commit history...", "Synthesizing architectural summaries..."]}>
             {isVerbose && <VerboseLogs />}
             <StreamSequence items={items} stepState={sharedStep} offset={0} />
             <MetricsFooter tokens={Math.ceil(JSON.stringify(PORTFOLIO_DATA.projects).length / 4) + 30} />
@@ -567,7 +649,7 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
       ];
       return (
         <div className="my-2 break-words">
-          <TaskRunner tools={["Read file skills.yml"]}>
+          <TaskRunner tools={["Loading skills.yml...", "Parsing capability matrix...", "Evaluating expertise levels..."]}>
             {isVerbose && <VerboseLogs />}
             <StreamSequence items={[items[0]]} stepState={sharedStep} offset={0} />
             <div className="my-4 space-y-3 border-l-2 border-zinc-800 pl-4">
@@ -591,7 +673,7 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
       ];
       return (
         <div className="my-2 break-words">
-          <TaskRunner tools={["Read file contact.json", "Verify external uplinks..."]}>
+          <TaskRunner tools={["Reading contact.json", "Establishing secure handshakes...", "Verifying external uplinks..."]}>
             {isVerbose && <VerboseLogs />}
             <StreamSequence items={[items[0]]} stepState={sharedStep} offset={0} />
             <div className="space-y-2 border-l-2 border-zinc-800 pl-4">
@@ -728,51 +810,25 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
       );
     }
 
-    case 'ask': {
-      const question = args.slice(1).join(' ').toLowerCase();
-      let answer = "I'm not sure how to answer that yet. Try asking about his skills, location, or tech stack.";
-      if (!question) {
-        answer = "What would you like to ask? (e.g. 'ask what is your favorite language?')";
-      } else if (question.includes('language') || question.includes('stack') || question.includes('tech')) {
-        answer = "Based on my training data regarding Ahmed, he is highly proficient in Rust, TypeScript, and Python. His current focus is on building AI platforms and orchestration engines.";
-      } else if (question.includes('location') || question.includes('where') || question.includes('live')) {
-        answer = "Ahmed is currently based in Austin, TX.";
-      } else if (question.includes('hire') || question.includes('job') || question.includes('work') || question.includes('salary') || question.includes('opportunity')) {
-        answer = "Ahmed is always open to discussing exciting opportunities in AI orchestration, systems engineering, or backend development. Try the 'email' command to get in touch.";
-      } else if (question.includes('project') || question.includes('build')) {
-        answer = "Ahmed enjoys building high-scale backend systems, AI orchestration frameworks (like LangGraph), and low-level tools (like Agent-Redteam in Rust).";
-      } else if (question.includes('who') || question.includes('about')) {
-        answer = "Ahmed is an AI Architect & Software Engineer specializing in Autonomous Agent Orchestration and High-Scale Systems.";
-      }
-
-      const items: StreamItem[] = [
-        { render: (s, d) => <div className="mt-3 text-zinc-300 text-sm leading-relaxed">{s ? <TypewriterText text={answer} onComplete={d} /> : answer}</div> }
-      ];
-
-      return (
-        <div className="my-2 break-words">
-          <TaskRunner tools={["Analyzing intent...", "Querying vector knowledge base...", "Synthesizing response..."]}>
-            <StreamSequence items={items} stepState={sharedStep} offset={0} />
-            <MetricsFooter tokens={answer.length + 50} />
-          </TaskRunner>
-        </div>
-      );
-    }
-
     case '/help':
     case 'help': {
       const helpCmds = [
-        { c: 'whoami', d: 'View profile information' },
-        { c: 'experience', d: 'View work history' },
-        { c: 'projects', d: 'View featured projects' },
-        { c: 'skills', d: 'View technical skills' },
-        { c: 'contact', d: 'View contact links' },
-        { c: 'neofetch', d: 'Display system info' },
-        { c: 'resume', d: 'Download resume as PDF' },
-        { c: 'fortune', d: 'Random programming quote' },
-        { c: 'history', d: 'Show command history' },
-        { c: '/clear', d: 'Clear the terminal output' },
-        { c: '/help', d: 'Show this help message' }
+        { c: 'whoami', d: 'Profile & identity metadata' },
+        { c: 'experience', d: 'Professional history & impact' },
+        { c: 'projects', d: 'Key works & architecture' },
+        { c: 'skills', d: 'Technical capability matrix' },
+        { c: 'ask <query>', d: 'Interactive AI FAQ' },
+        { c: 'email', d: 'Secure communication protocol' },
+        { c: 'ls [-la]', d: 'List directory contents' },
+        { c: 'cd <dir>', d: 'Change directory' },
+        { c: 'cat <file>', d: 'Read file contents' },
+        { c: 'vim <file>', d: 'Full-screen editor' },
+        { c: 'gui', d: 'Boot graphical interface' },
+        { c: 'matrix', d: 'Digital rain protocol' },
+        { c: 'hack', d: 'Simulated mainframe breach' },
+        { c: 'fortune', d: 'Random wisdom' },
+        { c: 'history', d: 'Command log' },
+        { c: 'clear', d: 'Reset viewport' }
       ];
       const items: StreamItem[] = [
         { render: (s, d) => <div className="text-zinc-300 mb-2 text-sm font-semibold">{s ? <TypewriterText text="Available commands:" onComplete={d} /> : "Available commands:"}</div> },
@@ -783,11 +839,13 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
       ];
       return (
         <div className="my-4">
-          <StreamSequence items={[items[0]]} stepState={sharedStep} offset={0} />
-          <div className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-x-2 gap-y-1 px-2 -mx-2">
-            <StreamSequence items={items.slice(1)} stepState={sharedStep} offset={1} />
-          </div>
-          <MetricsFooter tokens={190} />
+          <TaskRunner tools={["Querying command registry...", "Formatting manual pages..."]}>
+            <StreamSequence items={[items[0]]} stepState={sharedStep} offset={0} />
+            <div className="grid grid-cols-[100px_1fr] sm:grid-cols-[140px_1fr] gap-x-2 gap-y-1 mt-2">
+              <StreamSequence items={items.slice(1)} stepState={sharedStep} offset={1} />
+            </div>
+            <MetricsFooter tokens={190} />
+          </TaskRunner>
         </div>
       );
     }
@@ -823,6 +881,54 @@ type HistoryItem = {
   overridePrefix?: string;
 };
 
+const VimEditor = ({ filename, onExit }: { filename: string, onExit: () => void }) => {
+  const [content, setContent] = useState(() => {
+    if (filename === 'experience.md') return "# Experience\n\n- Visa Inc. | AI Platform\n- VIZIO Inc. | Embedded SWE";
+    return "";
+  });
+  const [input, setInput] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      if (input === ':q' || input === ':wq' || input === ':q!') {
+        onExit();
+      }
+      setInput("");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-[#1c1c1c] text-[#bcbcbc] font-mono z-[100] flex flex-col">
+      <div className="flex-1 p-4 overflow-y-auto whitespace-pre-wrap">
+        <div className="text-zinc-500 mb-4 italic">-- INSERT --</div>
+        {content}
+        <div className="h-4" />
+        <div className="animate-pulse w-2 h-5 bg-zinc-400 inline-block" />
+      </div>
+      <div className="bg-[#303030] px-2 py-1 flex justify-between text-xs">
+        <div>{filename || "[No Name]"}</div>
+        <div>1,1 All</div>
+      </div>
+      <div className="bg-[#1c1c1c] px-2 py-1 flex items-center gap-2">
+        <span className="text-zinc-400">:</span>
+        <input
+          ref={inputRef}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className="bg-transparent border-none outline-none flex-1 text-sm"
+          autoFocus
+        />
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   const [input, setInput] = useState('');
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -834,6 +940,8 @@ export default function App() {
   const [isTerminated, setIsTerminated] = useState(false);
   const [emailState, setEmailState] = useState<{ step: 'subject' | 'body', subject: string } | null>(null);
   const [cwd, setCwd] = useState('~/portfolio');
+  const [vimFile, setVimFile] = useState<string | null>(null);
+  const [isGuiMode, setIsGuiMode] = useState(false);
   const [achievements, setAchievements] = useState<string[]>([]);
   const [recentAchievement, setRecentAchievement] = useState<string | null>(null);
 
@@ -944,6 +1052,29 @@ export default function App() {
     }
     const args = trimmedCmd.split(' ').filter(Boolean);
     const baseCmd = args[0]?.toLowerCase() || '';
+
+    if (baseCmd === 'vim') {
+      const file = args[1] || 'untitled.md';
+      setCommandHistory(prev => [...prev, trimmedCmd]);
+      setHistory(h => [
+        ...h, 
+        { id: Date.now().toString(), type: 'input', content: trimmedCmd },
+        { id: (Date.now()+1).toString(), type: 'output', command: trimmedCmd, content: '' }
+      ]);
+      setTimeout(() => setVimFile(file), 1500);
+      return;
+    }
+
+    if (baseCmd === 'gui') {
+      setCommandHistory(prev => [...prev, trimmedCmd]);
+      setHistory(h => [
+        ...h, 
+        { id: Date.now().toString(), type: 'input', content: trimmedCmd },
+        { id: (Date.now()+1).toString(), type: 'output', command: trimmedCmd, content: '' }
+      ]);
+      setTimeout(() => setIsGuiMode(true), 2000);
+      return;
+    }
     
     if (baseCmd === 'cd') {
       const target = args[1] || '~';
@@ -951,12 +1082,17 @@ export default function App() {
       let error = '';
 
       if (target === '~') newCwd = '~';
+      else if (target === '/') newCwd = '/';
       else if (target === '..') {
         const parts = cwd.split('/');
         if (parts.length > 1) {
           parts.pop();
-          newCwd = parts.join('/');
+          newCwd = parts.join('/') || '/';
           if (newCwd === '') newCwd = '/';
+        } else if (cwd === '~/portfolio' || cwd === '~/.config' || cwd === '~/.ssh') {
+          newCwd = '~';
+        } else if (cwd === '~') {
+          newCwd = '/';
         }
       } else if (target === 'portfolio' && cwd === '~') {
         newCwd = '~/portfolio';
@@ -964,7 +1100,11 @@ export default function App() {
         newCwd = '~/.config';
       } else if (target === '.ssh' && cwd === '~') {
         newCwd = '~/.ssh';
+      } else if (target === 'var' && cwd === '/') {
+        newCwd = '/var';
       } else if ((target === '/var/logs') || (target === 'logs' && cwd === '/var')) {
+        newCwd = '/var/logs';
+      } else if (target === 'logs' && cwd === '/var') {
         newCwd = '/var/logs';
       } else {
         error = `cd: ${target}: No such file or directory`;
@@ -1057,7 +1197,23 @@ export default function App() {
   return (
     <ScrollContext.Provider value={scrollToBottom}>
     <div className="h-[100dvh] tui-bg text-zinc-100 font-mono text-[13px] sm:text-[14px] selection:bg-claude/30 flex flex-col cursor-default"
-         onClick={() => { if (!isTerminated) inputRef.current?.focus(); }}>
+         onClick={() => { if (!isTerminated && !vimFile) inputRef.current?.focus(); }}>
+
+      {vimFile && <VimEditor filename={vimFile} onExit={() => setVimFile(null)} />}
+      
+      {isGuiMode && (
+        <div className="fixed inset-0 bg-zinc-950 z-[1000] flex flex-col items-center justify-center p-6 text-center">
+          <div className="w-16 h-16 border-2 border-claude border-t-transparent rounded-full animate-spin mb-6" />
+          <h2 className="text-xl font-bold text-zinc-100 mb-2">Booting Legacy GUI...</h2>
+          <p className="text-zinc-400 max-w-md">The modern terminal interface is currently being bridged to the 2D document-based viewport.</p>
+          <button 
+            onClick={() => setIsGuiMode(false)}
+            className="mt-8 px-6 py-2 bg-claude text-zinc-950 font-bold rounded hover:bg-claude/90 transition-colors"
+          >
+            Abort & Return to Terminal
+          </button>
+        </div>
+      )}
 
       {/* Terminal Main Content */}
       <main ref={mainRef} className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6 custom-scrollbar">
