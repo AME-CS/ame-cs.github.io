@@ -372,38 +372,42 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
   );
 
   if (baseCmd === 'sudo') {
+    const msg = "Ahmed is not in the sudoers file. This incident will be reported.";
+    const items: StreamItem[] = [{ render: (s, d) => <div className="text-red-400 text-sm mt-3 font-semibold">{s ? <TypewriterText text={msg} onComplete={d} /> : msg}</div> }];
     return (
       <div className="my-2 break-words">
         <ToolUse action={`Attempting elevated privileges`} />
         {isVerbose && <VerboseLogs />}
-        <div className="text-red-400 text-sm mt-3 font-semibold">Ahmed is not in the sudoers file. This incident will be reported.</div>
+        <StreamSequence items={items} stepState={sharedStep} offset={0} />
         <MetricsFooter tokens={15} />
       </div>
     );
   }
 
   if (baseCmd === 'rm') {
+    const msg = "Access Denied: Nice try. I'm an AI, but I'm not that naive.";
+    const items: StreamItem[] = [{ render: (s, d) => <div className="text-red-400 text-sm mt-3 font-semibold">{s ? <TypewriterText text={msg} onComplete={d} /> : msg}</div> }];
     return (
       <div className="my-2 break-words">
         <ToolUse action={`Execute command '${command}'`} />
         {isVerbose && <VerboseLogs />}
-        <div className="text-red-400 text-sm mt-3 font-semibold">Access Denied: Nice try. I'm an AI, but I'm not that naive.</div>
+        <StreamSequence items={items} stepState={sharedStep} offset={0} />
         <MetricsFooter tokens={12} />
       </div>
     );
   }
 
   if (baseCmd === 'ls') {
+    const files = ["projects/", "whoami.json", "experience.md", "skills.yml", "contact.json"];
+    const lsItems: StreamItem[] = files.map(file => ({
+      render: (s, d) => <span className={"mr-4 " + (file.endsWith('/') ? 'text-claude' : '')}>{s ? <TypewriterText text={file} onComplete={d} /> : file}</span>
+    }));
     return (
       <div className="my-2 break-words">
         <ToolUse action="List current directory" />
         {isVerbose && <VerboseLogs />}
-        <div className="mt-3 text-zinc-300 text-sm font-medium flex gap-4">
-          <span className="text-claude">projects/</span>
-          <span>whoami.json</span>
-          <span>experience.md</span>
-          <span>skills.yml</span>
-          <span>contact.json</span>
+        <div className="mt-3 text-zinc-300 text-sm font-medium flex flex-wrap">
+          <StreamSequence items={lsItems} stepState={sharedStep} offset={0} />
         </div>
         <MetricsFooter tokens={30} />
       </div>
@@ -412,38 +416,48 @@ const CommandOutput = React.memo(({ command, onCommandClick, commandHistory = []
 
   if (baseCmd === 'cat') {
     const file = args[1];
-    if (file === 'whoami.json') {
-      return (
-        <div className="my-2 break-words">
-          <ToolUse action="Read file whoami.json" />
-          {isVerbose && <VerboseLogs />}
-          <pre className="mt-3 text-zinc-400 text-xs overflow-x-auto p-2 bg-zinc-900 rounded">
-            {JSON.stringify(PORTFOLIO_DATA.whoami, null, 2)}
-          </pre>
-          <MetricsFooter tokens={100} />
-        </div>
-      );
-    } else if (file === 'contact.json') {
-      return (
-        <div className="my-2 break-words">
-          <ToolUse action="Read file contact.json" />
-          {isVerbose && <VerboseLogs />}
-          <pre className="mt-3 text-zinc-400 text-xs overflow-x-auto p-2 bg-zinc-900 rounded">
-            {JSON.stringify(PORTFOLIO_DATA.contact, null, 2)}
-          </pre>
-          <MetricsFooter tokens={50} />
-        </div>
-      );
+    let content = '';
+    let action = `Read file ${file}`;
+    let isError = false;
+    let tokens = 10;
+
+    if (file === 'whoami.json' || file === 'whoami') {
+      content = JSON.stringify(PORTFOLIO_DATA.whoami, null, 2);
+      action = 'Read file whoami.json';
+      tokens = 100;
+    } else if (file === 'contact.json' || file === 'contact') {
+      content = JSON.stringify(PORTFOLIO_DATA.contact, null, 2);
+      action = 'Read file contact.json';
+      tokens = 50;
+    } else if (file === 'skills.yml' || file === 'skills') {
+      content = "Technical capabilities:\n" + Object.entries(PORTFOLIO_DATA.skills).map(([k, v]) => `${k}:\n  - ${v.split(', ').join('\n  - ')}`).join('\n\n');
+      action = 'Read file skills.yml';
+      tokens = 60;
+    } else if (file === 'experience.md' || file === 'experience') {
+      content = "# Experience\n\n" + PORTFOLIO_DATA.experience.map(e => `## ${e.company} | ${e.role} (${e.period})\n> ${e.desc}`).join('\n\n');
+      action = 'Read file experience.md';
+      tokens = 240;
     } else {
-      return (
-        <div className="my-2 break-words">
-          <ToolUse action={`Read file ${file}`} />
-          {isVerbose && <VerboseLogs />}
-          <div className="text-red-400 text-sm mt-3">cat: {file}: No such file or directory</div>
-          <MetricsFooter tokens={10} />
-        </div>
-      );
+      content = `cat: ${file || ''}: No such file or directory`;
+      isError = true;
     }
+
+    const items: StreamItem[] = [
+      { render: (s, d) => isError ? (
+        <div className="text-red-400 text-sm mt-3">{s ? <TypewriterText text={content} onComplete={d} /> : content}</div>
+      ) : (
+        <pre className="mt-3 text-zinc-400 text-xs overflow-x-auto p-2 bg-zinc-900 rounded whitespace-pre-wrap">{s ? <TypewriterText text={content} delay={1} onComplete={d} /> : content}</pre>
+      )}
+    ];
+
+    return (
+      <div className="my-2 break-words">
+        <ToolUse action={action} />
+        {isVerbose && <VerboseLogs />}
+        <StreamSequence items={items} stepState={sharedStep} offset={0} />
+        <MetricsFooter tokens={tokens} />
+      </div>
+    );
   }
 
   switch (baseCmd) {
