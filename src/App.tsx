@@ -879,6 +879,7 @@ type HistoryItem = {
   content: string;
   command?: string;
   overridePrefix?: string;
+  cwd?: string;
 };
 
 const VimEditor = ({ filename, onExit }: { filename: string, onExit: () => void }) => {
@@ -989,7 +990,8 @@ export default function App() {
         id: 'b1', 
         type: 'output', 
         content: '',
-        command: 'welcome' 
+        command: 'welcome',
+        cwd: cwd
       }]);
       setIsBooting(false);
     };
@@ -1059,7 +1061,7 @@ export default function App() {
       setHistory(h => [
         ...h, 
         { id: Date.now().toString(), type: 'input', content: trimmedCmd },
-        { id: (Date.now()+1).toString(), type: 'output', command: trimmedCmd, content: '' }
+        { id: (Date.now()+1).toString(), type: 'output', command: trimmedCmd, content: '', cwd }
       ]);
       setTimeout(() => setVimFile(file), 1500);
       return;
@@ -1070,7 +1072,7 @@ export default function App() {
       setHistory(h => [
         ...h, 
         { id: Date.now().toString(), type: 'input', content: trimmedCmd },
-        { id: (Date.now()+1).toString(), type: 'output', command: trimmedCmd, content: '' }
+        { id: (Date.now()+1).toString(), type: 'output', command: trimmedCmd, content: '', cwd }
       ]);
       setTimeout(() => setIsGuiMode(true), 2000);
       return;
@@ -1112,10 +1114,11 @@ export default function App() {
 
       setCommandHistory(prev => [...prev, trimmedCmd]);
       setHistory(h => [
-        ...h, 
+        ...h,
         { id: Date.now().toString(), type: 'input', content: trimmedCmd },
-        ...(error ? [{ id: (Date.now()+1).toString(), type: 'output' as const, command: `echo ${error}`, content: '' }] : [])
+        ...(error ? [{ id: (Date.now()+1).toString(), type: 'output' as const, command: `echo ${error}`, content: '', cwd }] : [])
       ]);
+
       if (!error) setCwd(newCwd);
       return;
     }
@@ -1140,7 +1143,8 @@ export default function App() {
         id: (Date.now() + 1).toString(), 
         type: 'output', 
         content: '',
-        command: trimmedCmd 
+        command: trimmedCmd,
+        cwd
       }]);
       setIsProcessing(false);
     }
@@ -1237,11 +1241,11 @@ export default function App() {
               {item.type === 'output' && (
                 <div className="tui-fade-in">
                   {item.command === 'welcome' ? (
-                    <StartupBanner cwd={cwd} />
+                    <StartupBanner cwd={item.cwd || cwd} />
                   ) : item.command?.startsWith('echo ') ? (
                     <div className="text-red-400 text-sm mt-3">{item.command.replace('echo ', '')}</div>
                   ) : (
-                    <CommandOutput command={item.command!} onCommandClick={executeCommand} commandHistory={commandHistory} cwd={cwd} />
+                    <CommandOutput command={item.command!} onCommandClick={executeCommand} commandHistory={commandHistory} cwd={item.cwd || cwd} />
                   )}
                 </div>
               )}
