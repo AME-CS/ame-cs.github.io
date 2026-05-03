@@ -14,12 +14,13 @@ const Terminal = () => {
     const [charIndex, setCharIndex] = useState(0);
 
     const sequence = [
-        { type: 'input', text: 'ame-code --whoami' },
-        { type: 'output', text: 'Initializing Ahmed Eid Portfolio Engine v2.0...' },
-        { type: 'output', text: 'Role: AI Architect & Software Engineer' },
-        { type: 'output', text: 'Status: Ready for orchestration.' },
-        { type: 'input', text: 'ame-code --summary' },
-        { type: 'output', text: 'AI Architect specializing in autonomous agent orchestration and Tier-0 payment systems ($500M+ annually).' }
+        { type: 'input', text: 'whoami' },
+        { type: 'output', text: 'NAME: Ahmed Eid' },
+        { type: 'output', text: 'ROLE: AI Architect & Software Engineer' },
+        { type: 'output', text: 'LOC: Austin, TX' },
+        { type: 'input', text: 'projects' },
+        { type: 'output', text: 'Agent-Redteam: Autonomous Adversarial AI' },
+        { type: 'output', text: 'CubeVision: Real-Time Rubik\'s Solver' }
     ];
 
     useEffect(() => {
