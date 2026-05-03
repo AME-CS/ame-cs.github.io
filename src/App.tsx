@@ -1192,9 +1192,32 @@ export default function App() {
       }
     } else if (e.key === 'Tab') {
       e.preventDefault();
-      const cmds = ['whoami', 'experience', 'projects', 'skills', 'contact', 'neofetch', 'resume', 'history', 'fortune', 'help', 'clear', 'exit', 'quit', 'ask', 'email'];
-      const match = cmds.find(c => c.startsWith(input.toLowerCase()));
-      if (match) setInput(match);
+      const parts = input.split(' ');
+      
+      if (parts.length <= 1) {
+        const cmds = ['whoami', 'experience', 'projects', 'skills', 'contact', 'neofetch', 'resume', 'history', 'fortune', 'help', 'clear', 'exit', 'quit', 'ask', 'email', 'ls', 'cd', 'pwd', 'cat', 'sudo', 'rm', 'gui', 'vim', 'matrix', 'hack'];
+        const match = cmds.find(c => c.startsWith(input.toLowerCase()));
+        if (match) setInput(match);
+      } else if (parts.length === 2) {
+        const baseCmd = parts[0].toLowerCase();
+        const target = parts[1];
+        
+        if (['cd', 'cat', 'vim', 'rm', 'ls'].includes(baseCmd)) {
+          let files: string[] = [];
+          if (cwd === '~/portfolio') files = ["projects/", "whoami.json", "experience.md", "skills.yml", "contact.json"];
+          else if (cwd === '~/.config') files = [".env"];
+          else if (cwd === '~/.ssh') files = ["id_rsa.pub", "known_hosts"];
+          else if (cwd === '/var/logs') files = ["system.log", "auth.log"];
+          else if (cwd === '/var') files = ["logs/"];
+          else if (cwd === '/') files = ["bin/", "etc/", "home/", "usr/", "var/"];
+          else if (cwd === '~') files = ["portfolio/", ".config/", ".ssh/"];
+          
+          const match = files.find(f => f.startsWith(target));
+          if (match) {
+            setInput(`${baseCmd} ${match}`);
+          }
+        }
+      }
     }
   };
 
